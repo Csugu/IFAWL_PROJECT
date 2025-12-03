@@ -2,9 +2,10 @@ from __future__ import annotations
 
 import random
 from typing import Literal
-from myPackages import Module1_txt
 import json
 import os
+
+from myPackages import Module1_txt
 
 class Voices:
     file_path = os.path.join('resources', 'voices.json')
@@ -57,25 +58,6 @@ class Printer:
         enemy.print_self()
         me.print_self()
 
-class Initializer:
-    """
-    me,enemy = Initializer.generate_me_and_enemy()
-    """
-
-    @classmethod
-    def generate_me_and_enemy(cls) -> tuple[My_ship, Enemy_ship]:
-        """
-        生成我方和敌方两个船只对象，并进行护盾和导弹的初始化
-        :return: 双方船只对象。使用两个变量来接住
-        """
-        me = My_ship()
-        me.shelter = 1
-        me.missile = 1
-        enemy = Enemy_ship()
-        enemy.shelter = 3
-        enemy.missile = 1
-        return me,enemy
-
 class My_ship:
     """
     ship.print_self()
@@ -92,6 +74,10 @@ class My_ship:
             print("-----")
         for _ in range(self.missile):
             print("[] ",end="")
+
+    def initialize(self):
+        self.missile = 1
+        self.shelter = 1
 
     def attack(self,atk:int,target:Enemy_ship):
         """
@@ -137,6 +123,7 @@ class My_ship:
                 self.heal(1)
             case _:
                 Module1_txt.printplus("你跳过了这一天！")
+my_ship = My_ship()
 
 class Enemy_ship:
     def __init__(self):
@@ -158,6 +145,11 @@ class Enemy_ship:
         :return: 无
         """
         target.shelter -= atk
+
+    def initialize(self):
+        self.missile = 2
+        self.shelter = 2
+enemy = Enemy_ship()
 
 
 if __name__ == "__main__":
