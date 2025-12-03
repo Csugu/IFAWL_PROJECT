@@ -90,11 +90,36 @@ class My_ship:
 
     def heal(self,hp:int):
         """
-        根据原始回血量进行加减并对目标进行治疗
+        根据原始回血量进行加减并进行治疗
         :param hp: 原始回血量
         :return: 无
         """
         self.shelter += hp
+
+    def load(self,num:int):
+        """
+        根据原始上弹量进行加减并进行上弹
+        :param num: 原始上弹量
+        :return: 无
+        """
+        self.missile += num
+
+    def react(self,enemy:Enemy_ship):
+        """
+        进行回合中响应
+        :param enemy: 当前敌方
+        :return: 无
+        """
+        operation = input(">>>")
+        match operation:
+            case 0:
+                self.load(1)
+            case 1:
+                self.attack(1,enemy)
+                self.load(-1)
+            case 2:
+                self.heal(1)
+
 
 class Enemy_ship:
     def __init__(self):
