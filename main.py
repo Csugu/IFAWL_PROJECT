@@ -1,6 +1,73 @@
 from __future__ import annotations
 
+import random
+from typing import Literal
+
+
+class Dice:
+    """
+    Dice.set_probability(0.7)
+    Dice.decide_who()
+    """
+
+    probability = 0.5
+    di = 0.2
+
+    @classmethod
+    def set_probability(cls,val:float):
+        """
+        设置当前的动态概率(摇到我方的概率)
+        :param val: 动态概率的取值
+        :return: 无
+        """
+        cls.probability = val
+
+    @classmethod
+    def decide_who(cls) -> Literal[0,1]:
+        """
+        决定谁来进行下一回合，并进行马尔科夫链变化
+        :return:
+        """
+        if random.random()<cls.probability:
+            cls.probability -= cls.di
+            return 1
+        else:
+            cls.probability += cls.di
+            return 0
+
+class Printer:
+    def __init__(self):
+        ...
+    @classmethod
+    def print_single_day(cls,me:My_ship,enemy:Enemy_ship):
+        enemy.print_self()
+        me.print_self()
+
+class Initializer:
+    """
+    me,enemy = Initializer.generate_me_and_enemy()
+    """
+
+    @classmethod
+    def generate_me_and_enemy(cls) -> tuple[My_ship, Enemy_ship]:
+        """
+        生成我方和敌方两个船只对象，并进行护盾和导弹的初始化
+        :return: 双方船只对象。使用两个变量来接住
+        """
+        me = My_ship()
+        me.shelter = 1
+        me.missile = 1
+        enemy = Enemy_ship()
+        enemy.shelter = 3
+        enemy.missile = 1
+        return me,enemy
+
 class My_ship:
+    """
+    ship.print_self()
+    ship.attack(3,enemy)
+    ship.heal(2)
+    """
 
     def __init__(self):
         self.shelter = 0
@@ -12,15 +79,22 @@ class My_ship:
         for _ in range(self.missile):
             print("[] ",end="")
 
-    @staticmethod
-    def attack(atk:int,target:Enemy_ship):
+    def attack(self,atk:int,target:Enemy_ship):
         """
-        根据原始伤害进行加减并对敌方造成攻击
+        根据原始伤害进行加减并对目标造成攻击
         :param atk: 原始伤害
         :param target: 承受攻击的敌方船只
         :return: 无
         """
         target.shelter -= atk
+
+    def heal(self,hp:int):
+        """
+        根据原始回血量进行加减并对目标进行治疗
+        :param hp: 原始回血量
+        :return: 无
+        """
+        self.shelter += hp
 
 class Enemy_ship:
     def __init__(self):
@@ -34,10 +108,9 @@ class Enemy_ship:
         for _ in range(self.shelter):
             print("-----")
 
-    @staticmethod
-    def attack(atk:int,target:My_ship):
+    def attack(self,atk:int,target:My_ship):
         """
-        根据原始伤害进行加减并对我方造成攻击
+        根据原始伤害进行加减并对目标造成攻击
         :param atk: 原始伤害
         :param target: 承受攻击的我方船只
         :return: 无
@@ -46,4 +119,4 @@ class Enemy_ship:
 
 
 if __name__ == "__main__":
-    enemy = Enemy_ship()
+    ...
