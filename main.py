@@ -13,9 +13,13 @@ class Voices:
         voices:dict[str:dict[str:list[str]]] = json.load(f)
 
     @classmethod
-    def report(cls,who:str,theme:str):
+    def report(cls,who:str,theme:str,print_who=True):
         try:
-            Module1_txt.printplus(random.choice(cls.voices[who][theme]))
+            if print_who:
+                txt = f"[{who}]" + random.choice(cls.voices[who][theme])
+            else:
+                txt = random.choice(cls.voices[who][theme])
+            Module1_txt.printplus(txt)
         except KeyError:
             pass
 
@@ -56,7 +60,9 @@ class Printer:
     @classmethod
     def print_single_day(cls,me:My_ship,enemy:Enemy_ship):
         enemy.print_self()
+        print("\n\n\n")
         me.print_self()
+        print("\n")
 
 class My_ship:
     """
@@ -137,20 +143,92 @@ class Enemy_ship:
         for _ in range(self.shelter):
             print("-----")
 
-    def attack(self,atk:int,target:My_ship):
+    def attack(self,atk:int):
         """
         根据原始伤害进行加减并对目标造成攻击
         :param atk: 原始伤害
-        :param target: 承受攻击的我方船只
         :return: 无
         """
-        target.shelter -= atk
+        my_ship.shelter -= atk
+
+    def heal(self,hp:int):
+        """
+        根据原始回血量进行加减并进行治疗
+        :param hp: 原始回血量
+        :return: 无
+        """
+        self.shelter += hp
+
+    def load(self,num:int):
+        """
+        根据原始上弹量进行加减并进行上弹
+        :param num: 原始上弹量
+        :return: 无
+        """
+        self.missile += num
 
     def initialize(self):
         self.missile = 2
         self.shelter = 2
+
+    def react(self):
+        operation = random.choice(["0","1","2"])
+        if self.missile < 1 and operation == "1":
+            operation = "0"
+        match operation:
+            case "0":
+                self.load(1)
+            case "1":
+                self.attack(1)
+                self.load(-1)
+            case "2":
+                self.heal(1)
+            case _:
+                Module1_txt.printplus("敌人跳过了这一天！")
+
 enemy = Enemy_ship()
 
+class Main_loops:
+
+    days = 0
+
+    @staticmethod
+    def is_over() -> Literal[-1,0,1]:
+        """
+        判定是否有一方死亡
+        :return: -1代表敌方胜利 0表示游戏继续 1表示我方胜利
+        """
+        if my_ship.shelter<0:
+            return -1
+        if enemy.shelter<0:
+            return 1
+        return 0
+
+    @classmethod
+    def initialize_before_fight(cls):
+        my_ship.initialize()
+        enemy.initialize()
+        cls.days = 1
+
+    @classmethod
+    def fight_mainloop(cls):
+        while 1:
+            Module1_txt.printplus(f"战斗的第{cls.days}天")
+            Printer.print_single_day(my_ship,enemy)
+            who = Dice.decide_who()
+            if who==1:
+                Module1_txt.printplus("今天由我方行动")
+                my_ship.react(enemy)
+            else:
+                Module1_txt.printplus("今天由敌方行动")
+                enemy.react()
+            if (result := cls.is_over()) != 0:
+                if result == 1:
+                    Module1_txt.printplus("我方胜利")
+                else:
+                    Module1_txt.printplus("敌方胜利")
+                return
 
 if __name__ == "__main__":
-    Voices.report("导弹","上弹")
+    Main_loops.initialize_before_fight()
+    Main_loops.fight_mainloop()
