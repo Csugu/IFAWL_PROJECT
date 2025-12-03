@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import random
 from typing import Literal
-import Module1_txt
+from myPackages import Module1_txt
 import json
 import os
 
