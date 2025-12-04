@@ -1,16 +1,21 @@
 from __future__ import annotations
 import time
 
-def get_shell_len(txt):#求字符串在Shell中的显示长度
-    """求字符串在Shell中的显示长度"""
-    len1=r"0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz<>/|-+\[]= :!@#%^&*()\{\}_.,;~"
-    l=0
-    for i in txt:
-        if i in len1:
-            l+=1
+
+def get_shell_len(txt: str) -> int:
+    """
+    计算字符串在Shell中的显示长度（ASCII字符宽度1，其他宽度2）
+    :param txt:
+    :return: 字符串在Shell中的显示长度
+    """
+    total = 0
+    for char in txt:
+        # ASCII可打印字符通常宽度为1
+        if ord(char) < 128 and char.isprintable():
+            total += 1
         else:
-            l+=2
-    return l
+            total += 2
+    return total
 
 def print_plus(txt:str, sec:float=0.3):
     """
@@ -83,10 +88,11 @@ class Tree:#打印用tree对象
 
     def generate_line_list(self, can_be_folded=False):
         """
-        行切片生成函数
+        生成Tree对象的行切片
+        :param can_be_folded:
+        :return: 一个字符串列表，包含Tree的每一行
         """
-        printlist=[]
-        printlist.append(self.topic)
+        printlist= [self.topic]
         if can_be_folded and len(self.body) > 3:
             for i in self.body[0:3]:
                 printlist.append("|")
