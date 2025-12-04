@@ -256,10 +256,10 @@ class Al_general:
         """
         return hp
 
-    def operate_morning(self):
+    def operate_in_morning(self):
         pass
 
-    def operate_afternoon(self):
+    def operate_in_afternoon(self):
         pass
 
     def initialize(self):
@@ -275,6 +275,9 @@ class Al_general:
 
     def suggest(self) -> str|None:
         return None
+
+    def operate_in_our_turn(self):
+        pass
 class Al3(Al_general):
 
     def react(self):
@@ -302,7 +305,7 @@ class Al4(Al_general):
             if self.state == 2:
                 self.report("准备好")
 
-    def operate_afternoon(self):
+    def operate_in_afternoon(self):
         if self.state>=2:
             self.state+=1
             if self.state==4:
@@ -322,6 +325,45 @@ class Al4(Al_general):
          "[自动攻击中]回流系统正在生效",
          "[自动攻击中]回流系统正在生效"][self.state]
 al4 = Al4(4)
+
+class Al30(Al_general):  # 湾区铃兰
+
+    description_txt = "-爆发力与续航皆臻高位的大型粒子炮武器\n-在航行日输入30发射粒子炮，输出2伤害并进入冷却\n-冷却期间，有概率消耗一个粒子匣为我方任何伤害提供伤害加成\n-[风中盛夏]在冷却期间输入30，牺牲两层护盾，仍能正常输出造成伤害"
+
+    def react(self):
+        if self.state == 0:
+            my_ship.attack(2)
+            self.state -= 5
+            self.report("正常攻击")
+            #p_c_manager.boom_now()
+        else:
+            enemy.attack(2)
+            Voices.report("护盾","湾区铃兰导致扣血")
+            self.report("牺牲护盾发射")
+            my_ship.attack(2)
+            #p_c_manager.boom_now()
+
+    def add_atk(self, atk: int) -> int:
+        if self.state < 0 < my_ship.missile and Dice.probability(0.8):
+            self.report("增伤")
+            my_ship.missile -= 1
+            return atk + 1
+        else:
+            return atk
+
+    def operate_in_our_turn(self):
+        if self.state < 0:
+            self.state += 1
+
+    def suggest(self):
+        if self.state == 0:
+            return "[q]粒子炮倾巢发射"
+        else:
+            if my_ship.shelter >= 2:
+                return f"[冷却中]剩余{-self.state}天|伤害加成中|[q]牺牲护盾强行攻击"
+            else:
+                return f"[冷却中]剩余{-self.state}天|伤害加成中"
+al30 = Al30(30)
 
 class FieldPrinter:
 
@@ -431,7 +473,7 @@ class MainLoops:
             # morning
             for al in my_ship.al_list:
                 if al:
-                    al.operate_morning()
+                    al.operate_in_morning()
 
             # noon
             who = Dice.decide_who()
@@ -445,7 +487,9 @@ class MainLoops:
             # afternoon
             for al in my_ship.al_list:
                 if al:
-                    al.operate_afternoon()
+                    al.operate_in_afternoon()
+                    if who==1:
+                        al.operate_in_our_turn()
 
             # dusk
             if (result := cls.is_over()) != 0:
@@ -457,6 +501,6 @@ class MainLoops:
             cls.days += 1
 
 if __name__ == "__main__":
-    my_ship.al_list = [al4,None,al3]
+    my_ship.al_list = [al30,None,al3]
     MainLoops.initialize_before_fight()
     MainLoops.fight_mainloop()
