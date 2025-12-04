@@ -351,6 +351,16 @@ class FieldPrinter:
         elif days > 20:
             Txt.printplus("当前舰船位置>>敌方腹地危险区域")
 
+    @classmethod
+    def print_key_prompt(cls):
+        key_prompt = "0/space 装弹  1 发射  2 上盾  "
+        for al in my_ship.al_list:
+            try:
+                key_prompt += f"{al.type} {al.short_name}#{al.index}  "
+            except AttributeError:
+                key_prompt += "[NO INFO]  "
+        print(key_prompt)
+
 class MainLoops:
 
     days = 0
@@ -383,6 +393,7 @@ class MainLoops:
             time.sleep(0.4)
             FieldPrinter.print_basic_info(cls.days)
             FieldPrinter.print_for_fight(my_ship, enemy)
+            FieldPrinter.print_key_prompt()
 
             # morning
             for al in my_ship.al_list:
