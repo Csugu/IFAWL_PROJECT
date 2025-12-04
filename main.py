@@ -27,7 +27,7 @@ class Voices:
                 txt = f"[{who}]" + random.choice(cls.voices[who][theme])
             else:
                 txt = random.choice(cls.voices[who][theme])
-            Txt.printplus(txt)
+            Txt.print_plus(txt)
         except KeyError:
             print(f"语音未定义-[{who}]{theme}")
 
@@ -152,7 +152,7 @@ class MyShip:
             case "e":
                 self.al_list[2].react()
             case _:
-                Txt.printplus("你跳过了这一天！")
+                Txt.print_plus("你跳过了这一天！")
 my_ship = MyShip()
 
 class EnemyShip:
@@ -208,7 +208,7 @@ class EnemyShip:
             case "2":
                 self.heal(1)
             case _:
-                Txt.printplus("敌人跳过了这一天！")
+                Txt.print_plus("敌人跳过了这一天！")
 enemy = EnemyShip()
 
 class Al_manager:
@@ -272,6 +272,9 @@ class Al_general:
                 print()
             except IndexError:
                 pass
+
+    def suggest(self) -> str:
+        return ""
 class Al3(Al_general):
 
     def react(self):
@@ -341,15 +344,15 @@ class FieldPrinter:
         :return: 无
         """
         print("~~~~~~~~~~~~~~~~~~~~~~~~")
-        Txt.printplus(f"指挥官，今天是战线展开的第{days}天。",0)
+        Txt.print_plus(f"指挥官，今天是战线展开的第{days}天。", 0)
         if days < 5:
-            Txt.printplus("当前舰船位置>>正在离港")
+            Txt.print_plus("当前舰船位置>>正在离港")
         elif days < 10:
-            Txt.printplus("当前舰船位置>>我方领土边缘")
+            Txt.print_plus("当前舰船位置>>我方领土边缘")
         elif days <= 20:
-            Txt.printplus("当前舰船位置>>边境核心战场")
+            Txt.print_plus("当前舰船位置>>边境核心战场")
         elif days > 20:
-            Txt.printplus("当前舰船位置>>敌方腹地危险区域")
+            Txt.print_plus("当前舰船位置>>敌方腹地危险区域")
 
     @classmethod
     def print_key_prompt(cls):
@@ -403,10 +406,10 @@ class MainLoops:
             # noon
             who = Dice.decide_who()
             if who==1:
-                Txt.printplus("今天由我方行动")
+                Txt.print_plus("今天由我方行动")
                 my_ship.react()
             else:
-                Txt.printplus("今天由敌方行动")
+                Txt.print_plus("今天由敌方行动")
                 enemy.react()
 
             # afternoon
@@ -417,9 +420,9 @@ class MainLoops:
             # dusk
             if (result := cls.is_over()) != 0:
                 if result == 1:
-                    Txt.printplus("我方胜利")
+                    Txt.print_plus("我方胜利")
                 else:
-                    Txt.printplus("敌方胜利")
+                    Txt.print_plus("敌方胜利")
                 return
             cls.days += 1
 
