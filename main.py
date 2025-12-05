@@ -5,13 +5,24 @@ import time
 from typing import Literal
 import json
 import os
+import shelve
 
 from myPackages import Module1_txt as Txt
 
+class JsonLoader:
+
+    def __init__(self):
+        self.dir = "resources"
+
+    def load(self,title):
+        file_path = os.path.join("", f'{title}.json')
+        with open(file_path, 'r', encoding='utf-8') as f:
+            return json.load(f)
+json_loader = JsonLoader()
+
 class Voices:
-    file_path = os.path.join('resources', 'voices.json')
-    with open(file_path, 'r', encoding='utf-8') as f:
-        voices:dict[str:dict[str:list[str]]] = json.load(f)
+
+    voices:dict[str,dict[str,list[str]]] = json_loader.load("voices")
 
     @classmethod
     def report(cls,who:str,theme:str,print_who=True):
@@ -227,9 +238,8 @@ class EnemyShip:
 enemy = EnemyShip()
 
 class Al_manager:
-    file_path = os.path.join('resources', 'al_meta_data.json')
-    with open(file_path, 'r', encoding='utf-8') as f:
-        al_meta_data: dict[str:dict[str:str|int]] = json.load(f)
+
+    al_meta_data: dict[str,dict[str,str|int]] = json_loader.load("al_meta_data")
 
     all_al_list:dict[str,Al_general] = {}
 
@@ -260,11 +270,11 @@ class Al_general:
         self.index:int                  = index
         self.short_name:str             = Al_manager.al_meta_data[str(index)]["short_name"]
         self.len_name:str               = Al_manager.al_meta_data[str(index)]["len_name"]
-        self.type:Literal["q","w","e"]  = Al_manager.al_meta_data[str(index)]["type"]
+        self.type:str                   = Al_manager.al_meta_data[str(index)]["type"]
         self.rank_num:int               = Al_manager.al_meta_data[str(index)]["rank_num"]
         self.skin_list:list[str]        = Al_manager.al_meta_data[str(index)].get("skin_list",[])
         self.platform:str               = Al_manager.al_meta_data[str(index)]["platform"]
-        self.metadata:dict[str:str|int] = Al_manager.al_meta_data[str(index)]
+        self.metadata:dict[str,str|int] = Al_manager.al_meta_data[str(index)]
         Al_manager.all_al_list[str(self.index)] = self
 
         # operation 字段
@@ -505,6 +515,34 @@ class Al30(Al_general):  # 湾区铃兰
             else:
                 return f"[冷却中]剩余{-self.state}天|伤害加成中"
 al30 = Al30(30)
+
+class StorageManager:
+
+    def __init__(self):
+        self.username:str = ""
+        self.template:dict[str,dict[str,str|int]] = json_loader.load("storage_template")
+        for al in Al_manager.all_al_list.values():
+            self.template["als"][str(al.index)] = 0
+        self.repository_for_all_users = shelve.open('userdata/game_save',writeback=True)
+
+    def sync(self):
+        self.repository_for_all_users.sync()
+
+    def login(self):
+        self.username = Txt.input_plus("指挥官，请输入您的代号")
+        if self.username in self.repository_for_all_users.keys():
+            for key in self.repository_for_all_users[self.username]:
+                if key in self.template:
+                    for item in self.repository_for_all_users[self.username][key]:
+                        if item in self.template[key]:
+                            self.template[key][item] = self.repository_for_all_users[self.username][key][item]
+        self.repository_for_all_users[self.username] = self.template
+        self.sync()
+
+    def logout(self):
+        Txt.print_plus(f"指挥官{self.username}请求登出")
+        Txt.print_plus("登出完毕")
+        self.repository_for_all_users.close()
 
 class FieldPrinter:
 

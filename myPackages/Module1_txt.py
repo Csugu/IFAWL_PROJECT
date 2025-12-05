@@ -38,8 +38,8 @@ def print_plus(txt:str, sec:float=0.3):
 
 def input_plus(txt:str,sec:float=0.3):
     """
-    增强视觉input函数
-    :param txt: 文本
+    增强视觉input函数。如果提示文本没有以>>>结尾则自动加上>>>
+    :param txt: 提示文本
     :param sec: 打印总时长
     :return:
     """
