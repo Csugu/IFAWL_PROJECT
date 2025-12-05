@@ -521,6 +521,10 @@ class StorageManager:
     def __init__(self):
         self.username:str = ""
         self.template:dict[str,dict[str,str|int]] = json_loader.load("storage_template")
+        self.item_to_key_table:dict[str,str] = {}
+        for key in self.template:
+            for item in self.template[key]:
+                self.item_to_key_table[item] = key
         for al in Al_manager.all_al_list.values():
             self.template["als"][str(al.index)] = 0
         self.repository_for_all_users = shelve.open('userdata/game_save',writeback=True)
@@ -529,6 +533,10 @@ class StorageManager:
         self.repository_for_all_users.sync()
 
     def login(self):
+        """
+        登录|将硬盘数据写入模板|新建用户|重灌入硬盘
+        :return: 无
+        """
         self.username = Txt.input_plus("指挥官，请输入您的代号")
         if self.username in self.repository_for_all_users.keys():
             for key in self.repository_for_all_users[self.username]:
@@ -536,6 +544,8 @@ class StorageManager:
                     for item in self.repository_for_all_users[self.username][key]:
                         if item in self.template[key]:
                             self.template[key][item] = self.repository_for_all_users[self.username][key][item]
+        else:
+            Txt.print_plus("初次登录|欢迎指挥官")
         self.repository_for_all_users[self.username] = self.template
         self.sync()
 
@@ -543,6 +553,18 @@ class StorageManager:
         Txt.print_plus(f"指挥官{self.username}请求登出")
         Txt.print_plus("登出完毕")
         self.repository_for_all_users.close()
+
+    def modify(self,item:str,delta:int):
+        """
+        增减仓库物品数量|最终业务封装
+        :param item:需要改变数量的物品
+        :param delta:物品数量改变量
+        :return: 无
+        """
+        key:str = self.item_to_key_table[item]
+        self.repository_for_all_users[self.username][key][item] += delta
+        self.sync()
+storage_manager = StorageManager()
 
 class FieldPrinter:
 
@@ -678,7 +700,4 @@ class MainLoops:
             cls.days += 1
 
 if __name__ == "__main__":
-    my_ship.al_list = [al4,al6,al7]
-    Al_manager.choose_al("q")
-    MainLoops.initialize_before_fight()
-    MainLoops.fight_mainloop()
+    storage_manager.login()
