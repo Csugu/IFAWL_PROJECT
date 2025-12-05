@@ -2,10 +2,11 @@ from __future__ import annotations
 
 import random
 import time
-from typing import Literal
 import json
 import os
 import shelve
+from typing import Literal
+from copy import deepcopy
 
 from myPackages import Module1_txt as Txt
 
@@ -15,7 +16,7 @@ class JsonLoader:
         self.dir = "resources"
 
     def load(self,title):
-        file_path = os.path.join("", f'{title}.json')
+        file_path = os.path.join("resources", f'{title}.json')
         with open(file_path, 'r', encoding='utf-8') as f:
             return json.load(f)
 json_loader = JsonLoader()
@@ -520,13 +521,18 @@ class StorageManager:
 
     def __init__(self):
         self.username:str = ""
+        # 建立模板
         self.template:dict[str,dict[str,str|int]] = json_loader.load("storage_template")
+        for al in Al_manager.all_al_list.values():
+            self.template["als"][str(al.index)] = 0
+        # 建立空模板
+        self.template_empty = deepcopy(self.template)
+        # 建立映射表
         self.item_to_key_table:dict[str,str] = {}
         for key in self.template:
             for item in self.template[key]:
                 self.item_to_key_table[item] = key
-        for al in Al_manager.all_al_list.values():
-            self.template["als"][str(al.index)] = 0
+        # 启动主仓库
         self.repository_for_all_users = shelve.open('userdata/game_save',writeback=True)
 
     def sync(self):
@@ -563,6 +569,14 @@ class StorageManager:
         """
         key:str = self.item_to_key_table[item]
         self.repository_for_all_users[self.username][key][item] += delta
+        self.sync()
+
+    def clear(self):
+        """
+        清空当前登录玩家的仓库
+        :return: 无
+        """
+        self.repository_for_all_users[self.username] = self.template_empty
         self.sync()
 storage_manager = StorageManager()
 
@@ -701,3 +715,5 @@ class MainLoops:
 
 if __name__ == "__main__":
     storage_manager.login()
+    storage_manager.clear()
+    print(storage_manager.repository_for_all_users["Miso"])
