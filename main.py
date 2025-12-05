@@ -240,28 +240,37 @@ enemy = EnemyShip()
 
 class Al_manager:
 
-    al_meta_data: dict[str,dict[str,str|int]] = json_loader.load("al_meta_data")
+    def __init__(self):
+        self.al_meta_data: dict[str,dict[str,str|int]] = json_loader.load("al_meta_data")
+        self.all_al_list:dict[str,Al_general] = {}
 
-    all_al_list:dict[str,Al_general] = {}
-
-    @classmethod
-    def choose_al(cls,type_choosing:Literal["q","w","e","all"]):
-        for al in cls.all_al_list.values():
+    def choose_al(self,type_choosing:Literal["q","w","e","all"]):
+        if type_choosing == "all":
+            self.choose_al("q")
+            self.choose_al("w")
+            self.choose_al("e")
+            return
+        for al in self.all_al_list.values():
             if al.type == type_choosing:
                 al.print_description()
+        cn_type = {"q":"主武器","w":"生存位","e":"战术装备"}[type_choosing]
+        al_position = {"q":0,"w":1,"e":2}[type_choosing]
         while 1:
-            inp = Txt.input_plus("\n指挥官，请输入数字选择本场战斗的主武器（对局中输入q来使用）[-1=不使用主武器]>>>")
-            if inp not in cls.al_meta_data or cls.al_meta_data[inp]["type"] != type_choosing:
+            inp = Txt.input_plus(f"\n指挥官，请输入数字选择本场战斗的{cn_type}（对局中输入{type_choosing}来使用）[-1=不使用{cn_type}]>>>")
+            if inp not in self.al_meta_data or self.al_meta_data[inp]["type"] != type_choosing:
                 if inp == "":
                     break
-                print("请在武器库中进行选择")
-                pass
+                elif inp == "-1":
+                    my_ship.al_list[al_position] = None
+                    break
+                print(f"请在{cn_type}库中进行选择")
             else:
-                print(f"{cls.al_meta_data[inp]['short_name']}#{cls.al_meta_data[inp]['index']}", "已确认装备")
-                my_ship.al_list[0] = cls.all_al_list[inp]
+                print(f"{self.al_meta_data[inp]['short_name']}#{self.al_meta_data[inp]['index']}", "已确认装备")
+                my_ship.al_list[al_position] = self.all_al_list[inp]
                 print("")
                 time.sleep(0.4)
                 break
+al_manager = Al_manager()
 
 class Al_general:
     #Apocalypse-Linked 明日尘埃装备体系
@@ -269,14 +278,14 @@ class Al_general:
     def __init__(self,index:int):
         # metadata 字段
         self.index:int                  = index
-        self.short_name:str             = Al_manager.al_meta_data[str(index)]["short_name"]
-        self.len_name:str               = Al_manager.al_meta_data[str(index)]["len_name"]
-        self.type:str                   = Al_manager.al_meta_data[str(index)]["type"]
-        self.rank_num:int               = Al_manager.al_meta_data[str(index)]["rank_num"]
-        self.skin_list:list[str]        = Al_manager.al_meta_data[str(index)].get("skin_list",[])
-        self.platform:str               = Al_manager.al_meta_data[str(index)]["platform"]
-        self.metadata:dict[str,str|int] = Al_manager.al_meta_data[str(index)]
-        Al_manager.all_al_list[str(self.index)] = self
+        self.short_name:str             = al_manager.al_meta_data[str(index)]["short_name"]
+        self.len_name:str               = al_manager.al_meta_data[str(index)]["len_name"]
+        self.type:str                   = al_manager.al_meta_data[str(index)]["type"]
+        self.rank_num:int               = al_manager.al_meta_data[str(index)]["rank_num"]
+        self.skin_list:list[str]        = al_manager.al_meta_data[str(index)].get("skin_list",[])
+        self.platform:str               = al_manager.al_meta_data[str(index)]["platform"]
+        self.metadata:dict[str,str|int] = al_manager.al_meta_data[str(index)]
+        al_manager.all_al_list[str(self.index)] = self
 
         # operation 字段
         self.state = 0
@@ -523,7 +532,7 @@ class StorageManager:
         self.username:str = ""
         # 建立模板
         self.template:dict[str,dict[str,str|int]] = json_loader.load("storage_template")
-        for al in Al_manager.all_al_list.values():
+        for al in al_manager.all_al_list.values():
             self.template["als"][str(al.index)] = 0
         # 建立空模板
         self.template_empty = deepcopy(self.template)
@@ -652,8 +661,8 @@ class FieldPrinter:
 
 class MainLoops:
 
-    days = 0
-    key_prompt = ""
+    def __init__(self):
+        self.days = 0
 
     @staticmethod
     def is_over() -> Literal[-1,0,1]:
@@ -667,18 +676,16 @@ class MainLoops:
             return 1
         return 0
 
-    @classmethod
-    def initialize_before_fight(cls):
+    def initialize_before_fight(self):
         my_ship.initialize()
         enemy.initialize()
-        cls.days = 1
+        self.days = 1
 
-    @classmethod
-    def fight_mainloop(cls):
+    def fight_mainloop(self):
         while 1:
             # dawn
             time.sleep(0.4)
-            FieldPrinter.print_basic_info(cls.days)
+            FieldPrinter.print_basic_info(self.days)
             FieldPrinter.print_for_fight(my_ship, enemy)
             FieldPrinter.print_suggestion()
             FieldPrinter.print_key_prompt()
@@ -705,15 +712,16 @@ class MainLoops:
                         al.operate_in_our_turn()
 
             # dusk
-            if (result := cls.is_over()) != 0:
+            if (result := self.is_over()) != 0:
                 if result == 1:
                     Txt.print_plus("我方胜利")
                 else:
                     Txt.print_plus("敌方胜利")
                 return
-            cls.days += 1
+            self.days += 1
+main_loops = MainLoops()
 
 if __name__ == "__main__":
-    storage_manager.login()
-    storage_manager.clear()
-    print(storage_manager.repository_for_all_users["Miso"])
+    al_manager.choose_al("all")
+    main_loops.initialize_before_fight()
+    main_loops.fight_mainloop()
