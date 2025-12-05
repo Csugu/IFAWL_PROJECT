@@ -23,10 +23,10 @@ json_loader = JsonLoader()
 
 class Voices:
 
-    voices:dict[str,dict[str,list[str]]] = json_loader.load("voices")
+    def __init__(self):
+        self.voices:dict[str,dict[str,list[str]]] = json_loader.load("voices")
 
-    @classmethod
-    def report(cls,who:str,theme:str,print_who=True):
+    def report(self, who:str, theme:str, print_who=True):
         """
         展示voices.json中记录的语音内容
         :param who: 语音发出者
@@ -36,42 +36,38 @@ class Voices:
         """
         try:
             if print_who:
-                txt = f"[{who}]" + random.choice(cls.voices[who][theme])
+                txt = f"[{who}]" + random.choice(self.voices[who][theme])
             else:
-                txt = random.choice(cls.voices[who][theme])
+                txt = random.choice(self.voices[who][theme])
             Txt.print_plus(txt)
         except KeyError:
             print(f"语音未定义-[{who}]{theme}")
+voices = Voices()
 
 class Dice:
-    """
-    Dice.set_probability(0.7)
-    Dice.decide_who()
-    """
 
-    probability_current = 0.5
-    di = 0.2
+    def __init__(self):
+        self.probability_current = 0.5
+        self.di = 0.2
 
-    @classmethod
-    def set_probability(cls,val:float):
+    def set_probability(self,val:float):
         """
         设置当前的动态概率(摇到我方的概率)
         :param val: 动态概率的取值
         :return: 无
         """
-        cls.probability_current = val
+        self.probability_current = val
 
-    @classmethod
-    def decide_who(cls) -> Literal[0,1]:
+    def decide_who(self) -> Literal[0,1]:
         """
         决定谁来进行下一回合，并进行马尔科夫链变化
         :return:
         """
-        if random.random()<cls.probability_current:
-            cls.probability_current -= cls.di
+        if random.random()<self.probability_current:
+            self.probability_current -= self.di
             return 1
         else:
-            cls.probability_current += cls.di
+            self.probability_current += self.di
             return 0
 
     @staticmethod
@@ -85,6 +81,7 @@ class Dice:
             return True
         else:
             return False
+dice = Dice()
 
 class MyShip:
     """
@@ -164,14 +161,14 @@ class MyShip:
         match operation:
             case "0"|" " :
                 self.load(1)
-                Voices.report("导弹","上弹")
+                voices.report("导弹","上弹")
             case "1":
                 self.attack(1)
                 self.load(-1)
-                Voices.report("导弹","发射")
+                voices.report("导弹","发射")
             case "2":
                 self.heal(1)
-                Voices.report("护盾","上盾")
+                voices.report("护盾","上盾")
             case "q":
                 self.al_list[0].react()
             case "w":
@@ -201,6 +198,12 @@ class EnemyShip:
         :return: 无
         """
         my_ship.shelter -= atk
+        if atk <= 0:
+            voices.report("护盾","未受伤")
+        elif atk <=1:
+            voices.report("护盾","受击")
+        else:
+            voices.report("护盾","受重击")
 
     def heal(self,hp:int):
         """
@@ -296,10 +299,13 @@ class Al_general:
         :param theme: 主题
         :return: 无
         """
-        Voices.report(self.short_name,theme)
+        voices.report(self.short_name,theme)
 
     def print_description(self):
-
+        """
+        打印Al的描述，用于装备选择界面
+        :return: 无
+        """
         tag0: str = self.metadata["origin"]
         tag1: str = self.platform
 
@@ -359,7 +365,7 @@ class Al_general:
 class Al3(Al_general):
 
     def react(self):
-        if Dice.probability(0.3*enemy.shelter):
+        if dice.probability(0.3*enemy.shelter):
             my_ship.attack(1)
             self.report("命中")
         else:
@@ -388,7 +394,7 @@ class Al4(Al_general):
             self.state+=1
             if self.state==4:
                 self.state=0
-            if Dice.probability(0.7):
+            if dice.probability(0.7):
                 my_ship.attack(1)
                 self.report("命中")
             else:
@@ -422,7 +428,7 @@ class Al5(Al_general):#水银
                 self.report("未命中")
 
     def add_load(self,num) -> int:
-        if self.state == 2 and Dice.probability(0.5):
+        if self.state == 2 and dice.probability(0.5):
             self.report("协助上弹")
             return num + 1
         else:
@@ -461,7 +467,7 @@ al6 = Al6(6)
 class Al7(Al_general):
     def react(self):
         if self.state == 0:
-            if Dice.probability(0.7):
+            if dice.probability(0.7):
                 if enemy.missile > 0:
                     self.state = 1
                     enemy.missile -= 1
@@ -471,7 +477,7 @@ class Al7(Al_general):
 
     def operate_in_morning(self):
         if self.state == 1:
-            if Dice.probability(0.6):
+            if dice.probability(0.6):
                 my_ship.attack(1)
                 self.state-=1
                 time.sleep(0.4)
@@ -499,7 +505,7 @@ class Al30(Al_general):  # 湾区铃兰
             #p_c_manager.boom_now()
         else:
             enemy.attack(2)
-            Voices.report("护盾","湾区铃兰导致扣血")
+            voices.report("护盾","湾区铃兰导致扣血")
             self.report("牺牲护盾发射")
             my_ship.attack(2)
             #p_c_manager.boom_now()
@@ -696,7 +702,7 @@ class MainLoops:
                     al.operate_in_morning()
 
             # noon
-            who = Dice.decide_who()
+            who = dice.decide_who()
             if who==1:
                 Txt.print_plus("今天由我方行动")
                 my_ship.react()
