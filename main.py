@@ -7,75 +7,15 @@ from typing import Literal
 from myPackages import Module1_txt as Txt
 from myPackages.Module2_json_loader import json_loader
 from myPackages.Module3_storage_manager import storage_manager
+from myPackages.Module4_voices import voices
+from myPackages.Module5_dice import dice
 
 DMG_TYPE_LIST:dict[int,str] = {
-    0:"missile_launch",
-    1:"particle_cannon_shooting",
-    2:"enemy_missile_boom",
-    3:"ordinary_attack"
+    0:"missile_launch", # 导弹射击
+    1:"particle_cannon_shooting", # 粒子炮射击
+    2:"enemy_missile_boom", # 敌方导弹殉爆
+    3:"ordinary_attack" # 杂项攻击
 }
-
-class Voices:
-
-    def __init__(self):
-        self.voices:dict[str,dict[str,list[str]]] = json_loader.load("voices")
-
-    def report(self, who:str, theme:str, print_who=True):
-        """
-        展示voices.json中记录的语音内容
-        :param who: 语音发出者
-        :param theme: 语音主题
-        :param print_who: 是否打印语音发出者
-        :return:
-        """
-        try:
-            if print_who:
-                txt = f"[{who}]" + random.choice(self.voices[who][theme])
-            else:
-                txt = random.choice(self.voices[who][theme])
-            Txt.print_plus(txt)
-        except KeyError:
-            print(f"语音未定义-[{who}]{theme}")
-voices = Voices()
-
-class Dice:
-
-    def __init__(self):
-        self.probability_current = 0.5
-        self.di = 0.2
-
-    def set_probability(self,val:float):
-        """
-        设置当前的动态概率(摇到我方的概率)
-        :param val: 动态概率的取值
-        :return: 无
-        """
-        self.probability_current = val
-
-    def decide_who(self) -> Literal[0,1]:
-        """
-        决定谁来进行下一回合，并进行马尔科夫链变化
-        :return:
-        """
-        if random.random()<self.probability_current:
-            self.probability_current -= self.di
-            return 1
-        else:
-            self.probability_current += self.di
-            return 0
-
-    @staticmethod
-    def probability(pro:float) -> bool:
-        """
-        这一函数有pro概率为真，反之为假
-        :param pro: 概率值，介于0和1之间
-        :return:
-        """
-        if random.random() < pro:
-            return True
-        else:
-            return False
-dice = Dice()
 
 class MyShip:
     """
@@ -676,7 +616,7 @@ class Al30(Al_general):  # 湾区铃兰
             #p_c_manager.boom_now()
 
     def add_atk(self, atk: int, type:str) -> int:
-        if self.state < 0 < my_ship.missile and Dice.probability(0.8):
+        if self.state < 0 < my_ship.missile and dice.probability(0.8):
             self.report("增伤")
             my_ship.missile -= 1
             return atk + 1
