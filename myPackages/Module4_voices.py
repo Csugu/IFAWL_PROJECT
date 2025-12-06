@@ -1,6 +1,6 @@
 import random
 
-import Module1_txt as Txt
+from . import Module1_txt as Txt
 from .Module2_json_loader import json_loader
 
 class Voices:

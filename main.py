@@ -98,9 +98,12 @@ class MyShip:
                 self.load(1)
                 voices.report("导弹","上弹")
             case "1":
-                self.attack(1,DMG_TYPE_LIST[0])
-                self.load(-1)
-                voices.report("导弹","发射")
+                if al15.state == 0:
+                    self.attack(1,DMG_TYPE_LIST[0])
+                    self.load(-1)
+                    voices.report("导弹","发射")
+                else:
+                    voices.report("暴雨","常规发射器离线")
             case "2":
                 self.heal(1)
                 voices.report("护盾","上盾")
@@ -134,6 +137,11 @@ class EnemyShip:
         :param atk: 原始伤害
         :return: 无
         """
+        for al in my_ship.al_list:
+            try:
+                atk = al.reduce_enemy_attack(atk)
+            except AttributeError:
+                pass
         my_ship.shelter -= atk
         if atk <= 0:
             voices.report("护盾","未受伤")
@@ -279,13 +287,21 @@ class Al_general:
         """
         return hp
 
-    def add_load(self,num:int):
+    def add_num(self, num:int):
         """
         为load提供加成
         :param num: 加成前num
         :return: 加成后num
         """
         return num
+
+    def reduce_enemy_attack(self,atk):
+        """
+        削弱敌方attack
+        :param atk: 削弱前atk
+        :return: 削弱后atk
+        """
+        return atk
 
     def reduce_enemy_heal(self,hp):
         """
@@ -382,7 +398,7 @@ class Al5(Al_general):#水银
             else:
                 self.report("未命中")
 
-    def add_load(self,num) -> int:
+    def add_num(self, num) -> int:
         if self.state == 2 and dice.probability(0.5):
             self.report("协助上弹")
             return num + 1
@@ -560,7 +576,7 @@ class Al12(Al_general):
 
     def __init__(self,index):
         super().__init__(index)
-        self.atk_list = [0, 0, 1, 2, 4, 5, 7, 8]
+        self.atk_list:list[int] = [0, 0, 1, 2, 4, 5, 7, 8]
 
     def react(self):
         if self.state < 7:
@@ -599,6 +615,100 @@ class Al12(Al_general):
         else:
             return f"[q]继续充能|[任意键]粒子炮开火|{self.atk_list[self.state]}伤害"
 al12 = Al12(12)
+
+class Al13(Al_general):
+    
+    def react(self):
+        if my_ship.missile == 0:
+            my_ship.missile += 1
+            self.report("导弹不足")
+        elif my_ship.missile == 1:
+            my_ship.missile -= 1
+            my_ship.attack(1,DMG_TYPE_LIST[0])
+            self.report("单导弹导航")
+        else:
+            my_ship.missile -= 2
+            my_ship.attack(2,DMG_TYPE_LIST[0])
+            self.report("全功率导航")
+
+    def suggest(self):
+        if my_ship.missile == 0:
+            return "[无导弹]不能使用北极|[0]装弹"
+        elif my_ship.missile == 1:
+            return "[e]导航单颗导弹|[0]装弹"
+        else:
+            return "[e]全功率导航"
+al13 = Al13(13)
+
+class Al14(Al_general):
+
+    def react(self):
+        if my_ship.shelter > 0:
+            self.report("强化成功")
+            self.state += 3
+            my_ship.shelter -= 1
+        else:
+            my_ship.heal(1)
+            self.report("护盾不足")
+        if dice.probability(0.2) and my_ship.shelter > 0:
+            self.react()
+
+    def reduce_enemy_attack(self,atk):
+        minor = min(self.state,atk)
+        if minor == self.state:
+            self.report("信风清空")
+        self.state -= minor
+        atk -= minor
+        return atk
+
+    def print_self(self):
+        print(self.skin_list[self.state % 3], end="")
+        print("\n//\\\\//" * (self.state // 3))
+
+    def suggest(self):
+
+        if my_ship.shelter == 0:
+            return "[护盾不足]不能使用信风|[2]回充护盾"
+        else:
+            return "[w]强化护盾"
+al14 = Al14(14)
+
+class Al15(Al_general):
+
+    def react(self):
+        if self.state == 0:
+            self.state = 2
+            self.report("上线")
+            my_ship.missile += 1
+        else:
+            self.state = 0
+            self.report("下线")
+
+    def add_num(self, num) -> int:
+        if self.state > 0:
+            self.report("弹雨滂沱")
+            return num + 1
+        else:
+            return num
+
+    def operate_in_afternoon(self):
+        if self.state > 0:  # 暴雨
+            if self.state == 1:
+                if my_ship.missile > 0:
+                    my_ship.missile -= 1
+                    my_ship.attack(1,DMG_TYPE_LIST[0])
+                    self.state = 2
+                    self.report("攻击")
+                else:
+                    self.state = 0
+                    self.report("下线")
+            else:
+                self.state -= 1
+
+    def suggest(self):
+        return ["[q]发射台开机|激活预备导弹", "[自动攻击中]当日发射|[q]发射台关机|[0]辅助上弹",
+                "[自动攻击中]次日发射|[q]发射台关机"][self.state]
+al15 = Al15(15)
 
 class Al30(Al_general):  # 湾区铃兰
 

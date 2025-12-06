@@ -1,6 +1,6 @@
 from __future__ import annotations
 import time
-
+from typing import Literal
 
 def get_shell_len(txt: str) -> int:
     """
@@ -16,6 +16,20 @@ def get_shell_len(txt: str) -> int:
         else:
             total += 2
     return total
+
+def adjust(txt:str,width:int,mode:Literal["left","right"]="left"):
+    """
+    用空格将原始文本填充至指定的宽度
+    :param txt: 根据shell宽度进行文本对齐
+    :param width: 目标占据宽度
+    :param mode: left|左对齐 right|右对齐
+    :return: 调整后的文本
+    """
+    match mode:
+        case "left":
+            return txt + " "*(width-get_shell_len(txt))
+        case "right":
+            return " " * (width-get_shell_len(txt)) + txt
 
 def print_plus(txt:str, sec:float=0.3):
     """
@@ -64,7 +78,7 @@ class Tree:#打印用tree对象
                     self.body.append(j)
             elif isinstance(i, dict):
                 for j in i:
-                    self.body.append(j+" "*(10-get_shell_len(j))+f" *{i[j]}")
+                    self.body.append(adjust(j,10)+f" *{i[j]}")
             elif type(i) == Tree:
                 i:Tree
                 self.body.append(i.topic)
@@ -92,17 +106,17 @@ class Tree:#打印用tree对象
         :param can_be_folded:
         :return: 一个字符串列表，包含Tree的每一行
         """
-        printlist= [self.topic]
+        line_list= [self.topic]
         if can_be_folded and len(self.body) > 3:
             for i in self.body[0:3]:
-                printlist.append("|")
-                printlist.append("|-"+str(i))
-            printlist.append("|")
-            printlist.append("|>>[已折叠]")
-            printlist.append("")
+                line_list.append("|")
+                line_list.append("|-"+str(i))
+            line_list.append("|")
+            line_list.append("|>>[已折叠]")
+            line_list.append("")
         else:
             for i in self.body:
-                printlist.append("|")
-                printlist.append("|-"+i)
-            printlist.append("")
-        return printlist
+                line_list.append("|")
+                line_list.append("|-"+i)
+            line_list.append("")
+        return line_list
