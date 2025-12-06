@@ -2,13 +2,11 @@ from __future__ import annotations
 
 import random
 import time
-import json
-import os
-import shelve
 from typing import Literal
-from copy import deepcopy
 
 from myPackages import Module1_txt as Txt
+from myPackages.Module2_json_loader import json_loader
+from myPackages.Module3_storage_manager import storage_manager
 
 DMG_TYPE_LIST:dict[int,str] = {
     0:"missile_launch",
@@ -16,18 +14,6 @@ DMG_TYPE_LIST:dict[int,str] = {
     2:"enemy_missile_boom",
     3:"ordinary_attack"
 }
-
-
-class JsonLoader:
-
-    def __init__(self):
-        self.dir = "resources"
-
-    def load(self,title):
-        file_path = os.path.join("resources", f'{title}.json')
-        with open(file_path, 'r', encoding='utf-8') as f:
-            return json.load(f)
-json_loader = JsonLoader()
 
 class Voices:
 
@@ -186,6 +172,8 @@ class MyShip:
                 self.al_list[2].react()
             case _:
                 Txt.print_plus("你跳过了这一天！")
+        if al12.state != 0 and  operation != "q":
+            al12.attack()
 my_ship = MyShip()
 
 class EnemyShip:
@@ -220,8 +208,14 @@ class EnemyShip:
         :param hp: 原始回血量
         :return: 无
         """
+        for al in my_ship.al_list:
+            try:
+                hp = al.reduce_enemy_heal(hp)
+            except AttributeError:
+                pass
         self.shelter += hp
-        voices.report("战场播报","敌上盾",False)
+        if hp > 0:
+            voices.report("战场播报","敌上盾",False)
 
     def load(self,num:int):
         """
@@ -288,7 +282,7 @@ class Al_manager:
 al_manager = Al_manager()
 
 class Al_general:
-    #Apocalypse-Linked 明日尘埃装备体系
+    # Apocalypse-Linked 终焉结套件
 
     def __init__(self,index:int):
         # metadata 字段
@@ -352,6 +346,14 @@ class Al_general:
         :return: 加成后num
         """
         return num
+
+    def reduce_enemy_heal(self,hp):
+        """
+        削弱敌方heal
+        :param hp: 削弱前hp
+        :return: 削弱后hp
+        """
+        return hp
 
     def operate_in_morning(self):
         pass
@@ -589,6 +591,75 @@ class Al10(Al_general):
                 return "[资源耗竭]|[2]回充护盾|[0]回充导弹"
 al10 = Al10(10)
 
+class Al11(Al_general):
+
+    def react(self):
+        if self.state == 0:
+            self.state += 2
+            my_ship.heal(1)
+            self.report("收到")
+            self.report("归来")
+        elif self.state == 2:
+            my_ship.attack(1,DMG_TYPE_LIST[3])
+            my_ship.heal(1)
+            self.state -= 1
+            self.report("为了身后的苍生")
+
+    def reduce_enemy_heal(self,hp):
+        my_ship.heal(1)
+        self.state -= 1
+        self.report("汲取成功")
+        hp -= 1
+        return hp
+
+    def suggest(self):
+        return ["[w]建立汲能器","[剩余一次]敌方护盾锁定中","[就绪]敌方护盾锁定中|[w]主动汲取敌方护盾"][self.state]
+al11 = Al11(11)
+
+class Al12(Al_general):
+
+    def __init__(self,index):
+        super().__init__(index)
+        self.atk_list = [0, 0, 1, 2, 4, 5, 7, 8]
+
+    def react(self):
+        if self.state < 7:
+            self.state += 1
+            self.report("充能中")
+        else:
+            my_ship.attack(self.atk_list[self.state],DMG_TYPE_LIST[1])
+            #p_c_manager.boom_now()
+            self.state = 0
+            self.report("过热")
+
+    def attack(self):
+        if self.atk_list[self.state] != 0:
+            my_ship.attack(self.atk_list[self.state],DMG_TYPE_LIST[1])
+            #p_c_manager.boom_now()
+            self.state = 0
+            self.report("攻击")
+        elif self.atk_list[self.state] == 0:
+            self.state = 0
+            self.report("晴空粒子炮充能失效·集群阵列回收中")
+            my_ship.heal(1)
+
+    def print_self(self):
+        if self.state != 0:
+            print(self.skin_list[self.state // 3], end="")
+            print(f"[晴空]粒子炮集群伤害水准：{self.atk_list[self.state]}")
+            print()
+
+    def suggest(self):
+        if self.state == 0:
+            return "[q]开始充能"
+        elif self.state == 7:
+            return f"[q/任意键]最高功率开火|{self.atk_list[self.state]}伤害"
+        elif self.atk_list[self.state] == 0:
+            return "[q]继续充能|[任意键]放弃开火并触发回盾|0伤害"
+        else:
+            return f"[q]继续充能|[任意键]粒子炮开火|{self.atk_list[self.state]}伤害"
+al12 = Al12(12)
+
 class Al30(Al_general):  # 湾区铃兰
 
     def react(self):
@@ -626,87 +697,7 @@ class Al30(Al_general):  # 湾区铃兰
                 return f"[冷却中]剩余{-self.state}天|伤害加成中"
 al30 = Al30(30)
 
-class StorageManager:
 
-    def __init__(self):
-        self.username:str = ""
-        # 建立模板
-        self.template:dict[str,dict[str,str|int]] = json_loader.load("storage_template")
-        for al in al_manager.all_al_list.values():
-            self.template["als"][str(al.index)] = 0
-        # 建立空模板
-        self.template_empty = deepcopy(self.template)
-        # 建立映射表
-        self.item_to_key_table:dict[str,str] = {}
-        for key in self.template:
-            for item in self.template[key]:
-                self.item_to_key_table[item] = key
-        # 启动主仓库
-        self.repository_for_all_users = shelve.open('userdata/game_save',writeback=True)
-
-    def sync(self):
-        """
-        将仓库同步至硬盘
-        :return: 无
-        """
-        self.repository_for_all_users.sync()
-
-    def login(self):
-        """
-        登录|将硬盘数据写入模板|新建用户|重灌入硬盘
-        :return: 无
-        """
-        self.username = Txt.input_plus("指挥官，请输入您的代号")
-        if self.username in self.repository_for_all_users.keys():
-            for key in self.repository_for_all_users[self.username]:
-                if key in self.template:
-                    for item in self.repository_for_all_users[self.username][key]:
-                        if item in self.template[key]:
-                            self.template[key][item] = self.repository_for_all_users[self.username][key][item]
-        else:
-            Txt.print_plus("初次登录|欢迎指挥官")
-        self.repository_for_all_users[self.username] = self.template
-        self.sync()
-
-    def logout(self):
-        Txt.print_plus(f"指挥官{self.username}请求登出")
-        Txt.print_plus("登出完毕")
-        self.repository_for_all_users.close()
-
-    def modify(self,item:str,delta:int):
-        """
-        增减仓库物品数量|最终业务封装
-        :param item:需要改变数量的物品
-        :param delta:物品数量改变量
-        :return: 无
-        """
-        key:str = self.item_to_key_table[item]
-        self.repository_for_all_users[self.username][key][item] += delta
-        self.sync()
-
-    def drop_for_fight(self):
-        """
-        单局战斗后掉落物结算|1100信用点|2种物品各13.5个
-        :return: 无
-        """
-        money = random.randint(1000, 1200)
-        self.modify("联邦信用点",money)
-        print(f"[赏金到账]信用点x{money}")
-        items = random.sample(list(self.template["materials"].keys()),2)
-        for item in items:
-            num = random.randint(11,16)
-            self.modify(item,num)
-            print(f"[战利品收集] {item}x{num}")
-        self.sync()
-
-    def clear(self):
-        """
-        清空当前登录玩家的仓库
-        :return: 无
-        """
-        self.repository_for_all_users[self.username] = self.template_empty
-        self.sync()
-storage_manager = StorageManager()
 
 class FieldPrinter:
 

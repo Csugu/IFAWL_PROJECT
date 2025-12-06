@@ -100,6 +100,7 @@
     "type": "w",
     "rank": "I",
     "rank_num": 1,
+    "skin_list": ["","[=]剩余一次","[≠]柒就绪"],
     "origin": "",
     "platform": "通用"
   },
@@ -111,6 +112,7 @@
     "type": "q",
     "rank": "VII",
     "rank_num": 7,
+    "skin_list": ["{//|\\\\}","{//||\\\\}","{//x||x\\\\}"],
     "origin": "浅草寺重工",
     "platform": "粒子炮"
   },
