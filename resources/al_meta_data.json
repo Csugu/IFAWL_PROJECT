@@ -65,6 +65,7 @@
     "type": "q",
     "rank": "I",
     "rank_num": 1,
+    "skin_list": ["","{=}准备中","{=x}剩余一次","{x=x}发射架就绪"],
     "origin": "浅草寺重工",
     "platform": "导弹"
   },
@@ -76,6 +77,7 @@
     "type": "w",
     "rank": "IV",
     "rank_num": 4,
+    "skin_list": ["","[*]修械师就绪"],
     "origin": "",
     "platform": "通用"
   },

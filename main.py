@@ -212,6 +212,7 @@ class EnemyShip:
         :return: 无
         """
         self.shelter += hp
+        voices.report("战场播报","敌上盾",False)
 
     def load(self,num:int):
         """
@@ -220,6 +221,7 @@ class EnemyShip:
         :return: 无
         """
         self.missile += num
+        voices.report("战场播报", "敌上弹", False)
 
     def initialize(self):
         self.missile = 2
@@ -445,13 +447,13 @@ class Al6(Al_general):
     def react(self):
         if self.state == 0:
             if my_ship.shelter > 0:
-                self.state += 1
+                self.state = 1
                 self.report("收到")
             else:
                 self.state = 2
                 self.report("生之帝国")
         elif self.state == 1:
-            self.state += 1
+            self.state = 2
             self.report("准备好")
 
     def operate_in_afternoon(self):
@@ -479,11 +481,9 @@ class Al7(Al_general):
         if self.state == 1:
             if dice.probability(0.6):
                 my_ship.attack(1)
-                self.state-=1
                 time.sleep(0.4)
                 self.report("引爆成功")
             else:
-                self.state-=1
                 time.sleep(0.4)
                 self.report("引爆失败")
         self.state = 0
@@ -494,6 +494,34 @@ class Al7(Al_general):
         else:
             return "[e]入侵敌方导弹让他们倒大霉"
 al7 = Al7(7)
+
+class Al8(Al_general):
+
+    def react(self):
+        if self.state<2:
+            self.state+=1
+            self.report("收到")
+            if self.state == 2:
+                self.state = 3
+                self.report("准备好")
+        elif self.state == 2:
+            self.state=3
+            self.report("续杯")
+
+    def add_atk(self,atk):
+        if dice.probability(0.8):
+            atk += 1
+            self.report("成功")
+        else:
+            self.report("失败")
+        self.state-=1
+        if self.state==1:
+            self.state=0
+        return atk
+
+    def suggest(self):
+        return ["[q]建造发射架基础 1/2","[q]建成发射架炮管 2/2","[q]续杯|导弹伤害加成中","[已建立]导弹伤害加成中"][self.state]
+al8 = Al8(8)
 
 class Al30(Al_general):  # 湾区铃兰
 
@@ -551,6 +579,10 @@ class StorageManager:
         self.repository_for_all_users = shelve.open('userdata/game_save',writeback=True)
 
     def sync(self):
+        """
+        将仓库同步至硬盘
+        :return: 无
+        """
         self.repository_for_all_users.sync()
 
     def login(self):
@@ -586,6 +618,21 @@ class StorageManager:
         self.repository_for_all_users[self.username][key][item] += delta
         self.sync()
 
+    def drop_for_fight(self):
+        """
+        单局战斗后掉落物结算|1100信用点|2种物品各13.5个
+        :return: 无
+        """
+        money = random.randint(1000, 1200)
+        self.modify("联邦信用点",money)
+        print(f"[赏金到账]信用点x{money}")
+        items = random.sample(self.template["materials"],2)
+        for item in items:
+            num = random.randint(11,16)
+            self.modify(item,num)
+            print(f"[战利品收集] {item}x{num}")
+        self.sync()
+
     def clear(self):
         """
         清空当前登录玩家的仓库
@@ -597,8 +644,7 @@ storage_manager = StorageManager()
 
 class FieldPrinter:
 
-    @classmethod
-    def print_for_fight(cls, me:MyShip, opposite:EnemyShip):
+    def print_for_fight(self, me:MyShip, opposite:EnemyShip):
         """
         打印双方护盾和导弹，以及我方Al
         :param me:
@@ -623,8 +669,7 @@ class FieldPrinter:
             pass
         print()
 
-    @classmethod
-    def print_basic_info(cls,days):
+    def print_basic_info(self,days):
         """
         打印战场基本信息
         :param days: 当前天数
@@ -641,8 +686,7 @@ class FieldPrinter:
         elif days > 20:
             Txt.print_plus("当前舰船位置>>敌方腹地危险区域")
 
-    @classmethod
-    def print_suggestion(cls):
+    def print_suggestion(self):
         suggestion_list = []
         for al in my_ship.al_list:
             try:
@@ -656,8 +700,7 @@ class FieldPrinter:
             suggestion_list.append("空闲")
         Txt.Tree("战斗辅助面板", suggestion_list).print_self()
 
-    @classmethod
-    def print_key_prompt(cls):
+    def print_key_prompt(self):
         key_prompt = "0/space 装弹  1 发射  2 上盾  "
         for al in my_ship.al_list:
             try:
@@ -665,6 +708,7 @@ class FieldPrinter:
             except AttributeError:
                 key_prompt += "[NO INFO]  "
         print(key_prompt)
+field_printer = FieldPrinter()
 
 class MainLoops:
 
@@ -692,10 +736,10 @@ class MainLoops:
         while 1:
             # dawn
             time.sleep(0.4)
-            FieldPrinter.print_basic_info(self.days)
-            FieldPrinter.print_for_fight(my_ship, enemy)
-            FieldPrinter.print_suggestion()
-            FieldPrinter.print_key_prompt()
+            field_printer.print_basic_info(self.days)
+            field_printer.print_for_fight(my_ship, enemy)
+            field_printer.print_suggestion()
+            field_printer.print_key_prompt()
 
             # morning
             for al in my_ship.al_list:
@@ -722,6 +766,7 @@ class MainLoops:
             if (result := self.is_over()) != 0:
                 if result == 1:
                     Txt.print_plus("我方胜利")
+                    storage_manager.drop_for_fight()
                 else:
                     Txt.print_plus("敌方胜利")
                 return
