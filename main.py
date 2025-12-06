@@ -10,6 +10,14 @@ from copy import deepcopy
 
 from myPackages import Module1_txt as Txt
 
+DMG_TYPE_LIST:dict[int,str] = {
+    0:"missile_launch",
+    1:"particle_cannon_shooting",
+    2:"enemy_missile_boom",
+    3:"ordinary_attack"
+}
+
+
 class JsonLoader:
 
     def __init__(self):
@@ -111,15 +119,16 @@ class MyShip:
             except AttributeError:
                 pass
 
-    def attack(self,atk:int):
+    def attack(self,atk:int,type:str):
         """
         根据原始伤害进行加减并对目标造成攻击
         :param atk: 原始伤害
+        :param type: 伤害种类
         :return: 无
         """
         for al in self.al_list:
             try:
-                atk = al.add_atk(atk)
+                atk = al.add_atk(atk,type)
             except AttributeError:
                 pass
         enemy.shelter -= atk
@@ -163,7 +172,7 @@ class MyShip:
                 self.load(1)
                 voices.report("导弹","上弹")
             case "1":
-                self.attack(1)
+                self.attack(1,DMG_TYPE_LIST[0])
                 self.load(-1)
                 voices.report("导弹","发射")
             case "2":
@@ -221,7 +230,8 @@ class EnemyShip:
         :return: 无
         """
         self.missile += num
-        voices.report("战场播报", "敌上弹", False)
+        if num > 0:
+            voices.report("战场播报", "敌上弹", False)
 
     def initialize(self):
         self.missile = 2
@@ -318,10 +328,11 @@ class Al_general:
         # [30] 岩河军工“湾区铃兰”饱和式蜂巢突击粒子炮      [粒子炮平台] [VIII] 1在仓库 >>[可以离站使用]<<
         print()
 
-    def add_atk(self,atk:int):
+    def add_atk(self,atk:int,type:str):
         """
         为atk提供加成
         :param atk: 加成前atk
+        :param type: 伤害种类，各Al决定是否加成
         :return: 加成后atk
         """
         return atk
@@ -368,7 +379,7 @@ class Al3(Al_general):
 
     def react(self):
         if dice.probability(0.3*enemy.shelter):
-            my_ship.attack(1)
+            my_ship.attack(1,DMG_TYPE_LIST[3])
             self.report("命中")
         else:
             self.report("未命中")
@@ -397,7 +408,7 @@ class Al4(Al_general):
             if self.state==4:
                 self.state=0
             if dice.probability(0.7):
-                my_ship.attack(1)
+                my_ship.attack(1,"missile_launch")
                 self.report("命中")
             else:
                 self.report("未命中")
@@ -424,7 +435,7 @@ class Al5(Al_general):#水银
         else:
             self.state=0
             if random.randint(0,9)>-1:
-                my_ship.attack(2)
+                my_ship.attack(2,DMG_TYPE_LIST[0])
                 self.report("命中")
             else:
                 self.report("未命中")
@@ -480,7 +491,7 @@ class Al7(Al_general):
     def operate_in_morning(self):
         if self.state == 1:
             if dice.probability(0.6):
-                my_ship.attack(1)
+                my_ship.attack(1,DMG_TYPE_LIST[2])
                 time.sleep(0.4)
                 self.report("引爆成功")
             else:
@@ -499,7 +510,7 @@ class Al8(Al_general):
 
     def react(self):
         if self.state<2:
-            self.state+=1
+            self.state += 1
             self.report("收到")
             if self.state == 2:
                 self.state = 3
@@ -508,7 +519,9 @@ class Al8(Al_general):
             self.state=3
             self.report("续杯")
 
-    def add_atk(self,atk):
+    def add_atk(self,atk,type):
+        if type != "missile_launch":
+            return atk
         if dice.probability(0.8):
             atk += 1
             self.report("成功")
@@ -527,7 +540,7 @@ class Al30(Al_general):  # 湾区铃兰
 
     def react(self):
         if self.state == 0:
-            my_ship.attack(2)
+            my_ship.attack(2,DMG_TYPE_LIST[1])
             self.state -= 5
             self.report("正常攻击")
             #p_c_manager.boom_now()
@@ -535,10 +548,10 @@ class Al30(Al_general):  # 湾区铃兰
             enemy.attack(2)
             voices.report("护盾","湾区铃兰导致扣血")
             self.report("牺牲护盾发射")
-            my_ship.attack(2)
+            my_ship.attack(2,DMG_TYPE_LIST[1])
             #p_c_manager.boom_now()
 
-    def add_atk(self, atk: int) -> int:
+    def add_atk(self, atk: int, type:str) -> int:
         if self.state < 0 < my_ship.missile and Dice.probability(0.8):
             self.report("增伤")
             my_ship.missile -= 1
@@ -626,7 +639,7 @@ class StorageManager:
         money = random.randint(1000, 1200)
         self.modify("联邦信用点",money)
         print(f"[赏金到账]信用点x{money}")
-        items = random.sample(self.template["materials"],2)
+        items = random.sample(list(self.template["materials"].keys()),2)
         for item in items:
             num = random.randint(11,16)
             self.modify(item,num)
@@ -774,6 +787,7 @@ class MainLoops:
 main_loops = MainLoops()
 
 if __name__ == "__main__":
+    storage_manager.login()
     al_manager.choose_al("all")
     main_loops.initialize_before_fight()
     main_loops.fight_mainloop()
