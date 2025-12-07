@@ -99,4 +99,11 @@ class StorageManager:
         """
         self.repository_for_all_users[self.username] = self.template_empty
         self.sync()
+
+    def save_al_on_ship(self,al_on_ship):
+        self.repository_for_all_users[self.username]["metadata"]["al_on_ship"] = al_on_ship
+        self.sync()
+
+    def get_al_on_ship(self):
+        return self.repository_for_all_users[self.username]["metadata"]["al_on_ship"]
 storage_manager = StorageManager()

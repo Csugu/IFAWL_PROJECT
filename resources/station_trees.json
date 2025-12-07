@@ -3,7 +3,7 @@
 		"title": "当前空间站>>>联邦海军L33地区“浅草寺”前哨空间站",
 		"line_list": [
 			"空间天气>{weather}",
-			"轨道高度>{height}",
+			"轨道高度>{height} km",
 			"站内时间>{hour}:{minute}"
 		],
 		"col": 0,

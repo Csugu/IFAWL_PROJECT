@@ -227,6 +227,7 @@ class Al_manager:
                 print("")
                 time.sleep(0.4)
                 break
+        storage_manager.save_al_on_ship(my_ship.al_list)
 al_manager = Al_manager()
 
 class Al_general:
@@ -832,7 +833,7 @@ class StationTreesManager:
             self.column = max(self.column,tree.col+1)
             self.row = max(self.row,tree.row+1)
         # 生成网格
-        self.grid = [[None for _ in range(self.row)] for _ in range(self.column)]
+        self.grid:list[list[None|Txt.Advanced_tree]] = [[None for _ in range(self.row)] for _ in range(self.column)]
         for tree in self.all_tree_list.values():
             self.grid[tree.col][tree.row] = tree
 
@@ -859,6 +860,13 @@ class StationTreesManager:
 
     def generate_all_line_list(self):
         all_line_list = [[] for _ in range(self.column)]
+        for column_index in range(self.column):
+            for tree in self.grid[column_index]:
+                try:
+                    all_line_list[column_index] += tree.generate_line_list()
+                except AttributeError:
+                    pass
+        return all_line_list
 
 
 station_trees_manager = StationTreesManager()
@@ -928,8 +936,7 @@ class MainLoops:
     def station_mainloop(self):
         while 1:
             station_trees_manager.inject_all()
-            for tree in station_trees_manager.all_tree_list.values():
-                tree.print_self()
+            Txt.n_column_print(station_trees_manager.generate_all_line_list(),50)
             go_to = input(">>>")
             match go_to:
                 case "x":
@@ -944,6 +951,7 @@ main_loops = MainLoops()
 
 if __name__ == "__main__":
     storage_manager.login()
+    my_ship.al_list = storage_manager.get_al_on_ship()
     while 1:
         main_loops.station_mainloop()
 
