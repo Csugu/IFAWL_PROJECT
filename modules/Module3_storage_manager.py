@@ -2,8 +2,8 @@ import random
 import shelve
 from copy import deepcopy
 
-from . import Module1_txt as Txt
-from .Module2_json_loader  import json_loader
+from core import Module1_txt as Txt
+from core.Module2_json_loader import json_loader
 
 class StorageManager:
 

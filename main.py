@@ -4,11 +4,11 @@ import random
 import time
 from typing import Literal
 
-from myPackages import Module1_txt as Txt
-from myPackages.Module2_json_loader import json_loader
-from myPackages.Module3_storage_manager import storage_manager
-from myPackages.Module4_voices import voices
-from myPackages.Module5_dice import dice
+from core import Module1_txt as Txt
+from core.Module2_json_loader import json_loader
+from modules.Module3_storage_manager import storage_manager
+from modules.Module4_voices import voices
+from modules.Module5_dice import dice
 
 DMG_TYPE_LIST:dict[int,str] = {
     0:"missile_launch", # 导弹射击
@@ -201,7 +201,7 @@ class Al_manager:
         self.al_meta_data: dict[str,dict[str,str|int]] = json_loader.load("al_meta_data")
         self.all_al_list:dict[str,Al_general] = {}
 
-    def choose_al(self,type_choosing:Literal["q","w","e","all"]):
+    def choose_al(self,type_choosing:str|Literal["q","w","e","all"]):
         if type_choosing == "all":
             self.choose_al("q")
             self.choose_al("w")
@@ -817,6 +817,52 @@ class FieldPrinter:
         print(key_prompt)
 field_printer = FieldPrinter()
 
+class StationTreesManager:
+
+    def __init__(self):
+        # 树构建
+        self.all_tree_list:dict[str,Txt.Advanced_tree] = {
+            "空间站信息": Txt.Advanced_tree(json_loader.load("station_trees")["空间站信息"]),
+            "按键导航": Txt.Advanced_tree(json_loader.load("station_trees")["按键导航"])
+        }
+        # 网格大小确认
+        self.column = 0
+        self.row = 0
+        for tree in self.all_tree_list.values():
+            self.column = max(self.column,tree.col+1)
+            self.row = max(self.row,tree.row+1)
+        # 生成网格
+        self.grid = [[None for _ in range(self.row)] for _ in range(self.column)]
+        for tree in self.all_tree_list.values():
+            self.grid[tree.col][tree.row] = tree
+
+    def inject_all(self):
+        self.all_tree_list["空间站信息"].inject({
+            "weather": random.choice(
+                [
+                    "晴朗",
+                    "大雾",
+                    "恒星磁暴",
+                    "微陨石暴雨",
+                    "平静",
+                    "error-空间站气象仪故障",
+                    "恒星季风",
+                    "小行星骤雨",
+                    "稀疏尘埃云",
+                    "稠密尘埃云"
+                ]
+            ),
+            "height": random.randint(35997,36003),
+            "hour": time.strftime("%H"),
+            "minute": time.strftime("%M")
+        })
+
+    def generate_all_line_list(self):
+        all_line_list = [[] for _ in range(self.column)]
+
+
+station_trees_manager = StationTreesManager()
+
 class MainLoops:
 
     def __init__(self):
@@ -878,10 +924,28 @@ class MainLoops:
                     Txt.print_plus("敌方胜利")
                 return
             self.days += 1
+
+    def station_mainloop(self):
+        while 1:
+            station_trees_manager.inject_all()
+            for tree in station_trees_manager.all_tree_list.values():
+                tree.print_self()
+            go_to = input(">>>")
+            match go_to:
+                case "x":
+                    break
+                case "p2":
+                    al_manager.choose_al("all")
+                case "q"|"w"|"e":
+                    al_manager.choose_al(go_to)
+                case _:
+                    pass
 main_loops = MainLoops()
 
 if __name__ == "__main__":
     storage_manager.login()
-    al_manager.choose_al("all")
-    main_loops.initialize_before_fight()
-    main_loops.fight_mainloop()
+    while 1:
+        main_loops.station_mainloop()
+
+        main_loops.initialize_before_fight()
+        main_loops.fight_mainloop()

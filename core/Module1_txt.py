@@ -67,8 +67,10 @@ def input_plus(txt:str,sec:float=0.3):
 
 class Tree:#打印用tree对象
 
-    def __init__(self,topic,*ag:str|int|list|dict|Tree):
-        self.topic=topic
+    def __init__(self,title,*ag:str|int|list|dict|Tree):
+        if not title:
+            return
+        self.title=title
         self.body=[]
         for i in ag:
             if type(i) == str or type(i) == int:
@@ -81,12 +83,12 @@ class Tree:#打印用tree对象
                     self.body.append(adjust(j,10)+f" *{i[j]}")
             elif type(i) == Tree:
                 i:Tree
-                self.body.append(i.topic)
+                self.body.append(i.title)
                 for j in i.body:
                     self.body.append(f" -{j}")
 
     def print_self(self, can_be_folded=False):
-        print(self.topic)
+        print(self.title)
         if can_be_folded and len(self.body) > 3:
             for i in self.body[0:3]:
                 print("|")
@@ -106,7 +108,7 @@ class Tree:#打印用tree对象
         :param can_be_folded:
         :return: 一个字符串列表，包含Tree的每一行
         """
-        line_list= [self.topic]
+        line_list= [self.title]
         if can_be_folded and len(self.body) > 3:
             for i in self.body[0:3]:
                 line_list.append("|")
@@ -121,6 +123,23 @@ class Tree:#打印用tree对象
             line_list.append("")
         return line_list
 
+class Advanced_tree(Tree):
+
+    def __init__(self, metadata: dict[str, list[str] | str | int], title=None, *ag):
+        """
+        [注意]这个子类完全重写了父类的构造方法
+        :param metadata: 初始化元数据字典
+        """
+        super().__init__(title, *ag)
+        self.title:str = metadata["title"]
+        self.body:list[str] = metadata["line_list"]
+        self.col:int = metadata["col"]
+        self.row:int = metadata["row"]
+        self.metadata = metadata
+
+    def inject(self,inject_data:dict[str,str|int]):
+        for i in range(len(self.body)):
+            self.body[i] = self.body[i].format_map(inject_data)
 
 def n_column_print(columns: list[list[str]], di_list: tuple[int]|int = ()):
     """
