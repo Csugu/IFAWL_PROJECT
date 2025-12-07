@@ -822,10 +822,10 @@ class StationTreesManager:
 
     def __init__(self):
         # 树构建
-        self.all_tree_list:dict[str,Txt.Advanced_tree] = {
-            "空间站信息": Txt.Advanced_tree(json_loader.load("station_trees")["空间站信息"]),
-            "按键导航": Txt.Advanced_tree(json_loader.load("station_trees")["按键导航"])
-        }
+        self.all_tree_list:dict[str,Txt.Advanced_tree] = {}
+        all_trees = json_loader.load("station_trees")
+        for topic in all_trees:
+            self.all_tree_list[topic] = Txt.Advanced_tree(all_trees[topic])
         # 网格大小确认
         self.column = 0
         self.row = 0
@@ -857,6 +857,12 @@ class StationTreesManager:
             "hour": time.strftime("%H"),
             "minute": time.strftime("%M")
         })
+        self.all_tree_list["指挥官信息"].inject({
+            "username": storage_manager.username,
+            "ship_name": storage_manager.repository_for_all_users[storage_manager.username]["metadata"]["ship_name"],
+            "isk_num": storage_manager.repository_for_all_users[storage_manager.username]["currency"]["联邦信用点"],
+            "cmp_num": storage_manager.repository_for_all_users[storage_manager.username]["currency"]["合约纪念点"]
+        }) # TODO: 给storage_manager写一个快速查找物品数目的方法
 
     def generate_all_line_list(self):
         all_line_list = [[] for _ in range(self.column)]

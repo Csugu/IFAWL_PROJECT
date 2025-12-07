@@ -138,6 +138,7 @@ class Advanced_tree(Tree):
         self.metadata = metadata
 
     def inject(self,inject_data:dict[str,str|int]):
+        self.title = self.title.format_map(inject_data)
         for i in range(len(self.body)):
             self.body[i] = self.body[i].format_map(inject_data)
 
