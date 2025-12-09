@@ -8,7 +8,7 @@ from core import Module1_txt as Txt
 from core.Module2_json_loader import json_loader
 from modules.Module3_storage_manager import storage_manager
 from modules.Module4_voices import voices
-from modules.Module5_dice import dice
+from core.Module5_dice import dice
 
 DMG_TYPE_LIST:dict[int,str] = {
     0:"missile_launch", # 导弹射击
@@ -18,16 +18,16 @@ DMG_TYPE_LIST:dict[int,str] = {
 }
 
 class MyShip:
-    """
-    ship.print_self()
-    ship.attack(3,enemy)
-    ship.heal(2)
-    """
 
     def __init__(self):
         self.shelter = 0
         self.missile = 0
         self.al_list:list[Al_general|None] = [None,None,None]
+        self.total_al_rank = 0
+
+    def load_al(self):
+        self.al_list = storage_manager.get_al_on_ship()
+        self.total_al_rank = al_manager.get_total_al_rank()
 
     def print_self(self):
         for _ in range(self.shelter):
@@ -228,6 +228,22 @@ class Al_manager:
                 time.sleep(0.4)
                 break
         storage_manager.save_al_on_ship(my_ship.al_list)
+        my_ship.total_al_rank = 0
+        for al in my_ship.al_list:
+            try:
+                my_ship.total_al_rank += al.rank_num
+            except AttributeError:
+                pass
+
+    def get_total_al_rank(self):
+        out = 0
+        for al in my_ship.al_list:
+            try:
+                out += al.rank_num
+            except AttributeError:
+                pass
+        return out
+
 al_manager = Al_manager()
 
 class Al_general:
@@ -859,10 +875,21 @@ class StationTreesManager:
         })
         self.all_tree_list["指挥官信息"].inject({
             "username": storage_manager.username,
-            "ship_name": storage_manager.repository_for_all_users[storage_manager.username]["metadata"]["ship_name"],
-            "isk_num": storage_manager.repository_for_all_users[storage_manager.username]["currency"]["联邦信用点"],
-            "cmp_num": storage_manager.repository_for_all_users[storage_manager.username]["currency"]["合约纪念点"]
-        }) # TODO: 给storage_manager写一个快速查找物品数目的方法
+            "ship_name": storage_manager.get_value_of("ship_name"),
+            "isk_num": storage_manager.get_value_of("联邦信用点"),
+            "cmp_num": storage_manager.get_value_of("合约纪念点")
+        })
+        self.all_tree_list["按键导航"].inject({})
+        self.all_tree_list["终焉结信息"].inject({
+            "total_al_rank":my_ship.total_al_rank,
+            "ssg_tag": "[保险点未覆盖当前舰船]" \
+                if storage_manager.get_value_of("保险点")<my_ship.total_al_rank \
+                else ">>保险点已覆盖当前舰船<<",
+            "ssg_num": storage_manager.get_value_of("保险点"),
+            "q_information": my_ship.al_list[0].len_name if my_ship.al_list[0] else "[No Info]",
+            "w_information": my_ship.al_list[1].len_name if my_ship.al_list[1] else "[No Info]",
+            "e_information": my_ship.al_list[2].len_name if my_ship.al_list[2] else "[No Info]"
+        })
 
     def generate_all_line_list(self):
         all_line_list = [[] for _ in range(self.column)]
@@ -939,7 +966,8 @@ class MainLoops:
                 return
             self.days += 1
 
-    def station_mainloop(self):
+    @staticmethod
+    def station_mainloop():
         while 1:
             station_trees_manager.inject_all()
             Txt.n_column_print(station_trees_manager.generate_all_line_list(),50)
@@ -957,7 +985,7 @@ main_loops = MainLoops()
 
 if __name__ == "__main__":
     storage_manager.login()
-    my_ship.al_list = storage_manager.get_al_on_ship()
+    my_ship.load_al()
     while 1:
         main_loops.station_mainloop()
 

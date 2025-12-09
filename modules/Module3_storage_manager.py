@@ -68,7 +68,7 @@ class StorageManager:
 
     def modify(self,item:str,delta:int):
         """
-        增减仓库物品数量|最终业务封装
+        增减仓库物品数量|核心业务封装
         :param item:需要改变数量的物品
         :param delta:物品数量改变量
         :return: 无
@@ -76,6 +76,15 @@ class StorageManager:
         key:str = self.item_to_key_table[item]
         self.repository_for_all_users[self.username][key][item] += delta
         self.sync()
+
+    def get_value_of(self,item:str) -> int|str:
+        """
+        查找仓库物品数量或元数据值|核心业务封装
+        :param item:需查找的物品或键
+        :return: 物品在仓库中的数量或元数据值
+        """
+        key: str = self.item_to_key_table[item]
+        return self.repository_for_all_users[self.username][key][item]
 
     def drop_for_fight(self):
         """

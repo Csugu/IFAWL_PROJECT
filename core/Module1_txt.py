@@ -131,16 +131,21 @@ class Advanced_tree(Tree):
         :param metadata: 初始化元数据字典
         """
         super().__init__(title, *ag)
-        self.title:str = metadata["title"]
-        self.body:list[str] = metadata["line_list"]
+        self.title_raw:str = metadata["title"]
+        self.body_raw:list[str] = metadata["line_list"]
+        self.title = ""
+        self.body = ["" for _ in range(len(self.body_raw))]
         self.col:int = metadata["col"]
         self.row:int = metadata["row"]
         self.metadata = metadata
 
     def inject(self,inject_data:dict[str,str|int]):
-        self.title = self.title.format_map(inject_data)
-        for i in range(len(self.body)):
-            self.body[i] = self.body[i].format_map(inject_data)
+        self.title = self.title_raw.format_map(inject_data)
+        for i in range(len(self.body_raw)):
+            try:
+                self.body[i] = self.body_raw[i].format_map(inject_data)
+            except KeyError:
+                pass
 
 def n_column_print(columns: list[list[str]], di_list: tuple[int]|int = ()):
     """

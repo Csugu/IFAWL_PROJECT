@@ -41,5 +41,15 @@
 		],
 		"col": 1,
 		"row": 0
+	},
+	"终焉结信息": {
+		"title": "装备配置 总等级 {total_al_rank} {ssg_tag} 保险点--{ssg_num}",
+		"line_list": [
+			"武器站:{q_information}",
+			"生存位:{w_information}",
+			"战术区:{e_information}"
+		],
+		"col": 1,
+		"row": 1
 	}
 }
