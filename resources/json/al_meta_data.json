@@ -158,6 +158,7 @@
     "type": "w",
     "rank": "VI",
     "rank_num": 6,
+    "skin_list": ["[+|+]","{+||+}","{+x||x+}"],
     "origin": "浅草寺重工",
     "platform": "通用"
   },
