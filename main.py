@@ -818,7 +818,7 @@ al15 = Al15(15)
 
 
 class Al16(Al_general):
-    cure_list = [0, 4, 6, 8, 10]
+    cure_list = [0, 3, 6, 8, 10]
 
     def react(self):
         if self.state < 4:
