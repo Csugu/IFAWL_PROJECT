@@ -1,7 +1,7 @@
 # IFAWL 新伊甸命运 进攻战线 指挥官启航指南 ☄️
 浅草寺重工 Csugu Miso Tecrel
 
-v 0.1.0-alpha "on schedule" “准点出发” 试玩版
+v 0.2.0-alpha "on schedule" “准点出发” 试玩版
 
 ## 运行要求
 Python 3.10+
