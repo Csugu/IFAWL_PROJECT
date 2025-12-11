@@ -999,10 +999,10 @@ class FieldPrinter:
         Txt.Tree("战斗辅助面板", suggestion_list).print_self()
 
     def print_key_prompt(self):
-        key_prompt = "0/space 装弹  1 发射  2 上盾  "
+        key_prompt = "[0/space] 装弹  [1] 发射  [2] 上盾  "
         for al in my_ship.al_list:
             try:
-                key_prompt += f"{al.type} {al.short_name}#{al.index}  "
+                key_prompt += f"[{al.type}] {al.short_name}#{al.index}  "
             except AttributeError:
                 key_prompt += "[NO INFO]  "
         print(key_prompt)
