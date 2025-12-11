@@ -110,7 +110,7 @@ class MyShip:
             operation = "0"
         if self.al_list[1] == al18 and operation == "2":
             operation = "w"
-        if al12.state != 0 and operation != "q":
+        if al12.state != 0 and operation != "q" and not (self.al_list[1]==al16 and operation in ["w","2"]):
             al12.attack()
         if al15.state != 0 and operation == "1":
             voices.report("暴雨", "常规发射器离线")
@@ -691,7 +691,7 @@ class Al12(Al_general):
             self.report("攻击")
         elif self.atk_list[self.state] == 0:
             self.state = 0
-            self.report("晴空粒子炮充能失效·集群阵列回收中")
+            self.report("十四行赞美诗与一首绝望的歌")
             my_ship.heal(1)
 
     def print_self(self):
