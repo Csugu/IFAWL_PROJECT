@@ -81,7 +81,7 @@ class StorageManager:
         new_name = Txt.input_plus("请输入舰船的新名称|[enter]取消")
         if new_name == "":
             return
-        self.repository_for_all_users["metadata"]["ship_name"] = new_name
+        self.repository_for_all_users[self.username]["metadata"]["ship_name"] = new_name
         self.sync()
 
 
