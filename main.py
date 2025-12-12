@@ -260,11 +260,12 @@ class Al_manager:
                     break
                 print(f"请在{cn_type}库中进行选择")
             else:
-                print(f"{self.al_meta_data[inp]['short_name']}#{self.al_meta_data[inp]['index']}", "已确认装备")
+                Txt.print_plus(f"{self.al_meta_data[inp]['short_name']}#{self.al_meta_data[inp]['index']} 已确认装备")
                 my_ship.al_list[al_position] = self.all_al_list[inp]
                 print("")
-                time.sleep(0.4)
-                break
+                if not self.check_if_kick_e() or type_choosing == "q":
+                    time.sleep(0.4)
+                    break
         storage_manager.save_al_on_ship(my_ship.al_list)
         my_ship.update_total_al_rank()
 
@@ -287,6 +288,22 @@ class Al_manager:
                 pass
         return out
 
+    def check_if_kick_e(self) -> bool:
+        q = my_ship.al_list[0]
+        e = my_ship.al_list[2]
+        if not q or not e:
+            return False
+        if e.metadata["platform"] == "通用":
+            return False
+        if q.metadata["platform"] != e.metadata["platform"]:
+            Txt.print_plus(
+                f"注意·主武器和战术区的终焉结不匹配|[{q.short_name}]{q.metadata['platform']}|[{e.short_name}]{e.metadata['platform']}"
+            )
+            Txt.print_plus(f"{e.len_name}将被卸下")
+            my_ship.al_list[2] = None
+            Txt.print_plus(f"请选用平台相同的终焉结或选择通用终焉结")
+            return True
+        return False
 
 al_manager = Al_manager()
 
