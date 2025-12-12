@@ -1,3 +1,6 @@
+from core.Module1_txt import print_plus, input_plus
+
+
 class Auto_pilot_manager:#自动驾驶
 
     def __init__(self):
@@ -87,14 +90,14 @@ class Auto_pilot_manager:#自动驾驶
                 try:
                     if self.condition_list[1] == "Same as yesterday":
                         self.condition_list[1]= "True"
-                except:
+                except IndexError:
                     pass
                 output=self.to_do_list_normal[0]
             else:
                 try:
                     if self.condition_list[1] == "Same as yesterday":
                         self.condition_list[1]= "False"
-                except:
+                except IndexError:
                     pass
                 output=self.to_do_list_special[0]
 
@@ -116,15 +119,15 @@ class Auto_pilot_manager:#自动驾驶
         self.to_do_list_special=[]
         self.memory=[]      
 
-    def get(self,n):
+    def get_operation(self, n):
         if not self.to_do_list_normal:
-            i=input(">>>")
-            if "-"in i:
+            i = input_plus("请输入你的操作>>>")
+            if "-" in i:
                 self.read(i)
-                print("已录入，准备接管")
+                print_plus("自动驾驶数据已录入，准备接管舰船<<<")
                 i = self.react(n)
         else:
-            print("自动驾驶进行中")
+            print("自动驾驶接管中<<<")
             i = self.react(n)
         return i
 
