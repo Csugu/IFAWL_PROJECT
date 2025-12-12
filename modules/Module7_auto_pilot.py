@@ -27,8 +27,8 @@ class Auto_pilot_manager:#自动驾驶
                 处理条件判断语句 "[True]2;1,1"
                 目的：将条件和两种做法分别置入三个列表中
                 """
-                do_when_true = token[token.find("]")+1:token.find(";")] # 分离True时操作 "2"
-                do_when_false = token[token.find(";")+1:]# 分离False时操作 "1,1"
+                do_when_true = token[token.find("]") + 1:token.find(";")] # 分离True时操作 "2"
+                do_when_false = token[token.find(";") + 1:]# 分离False时操作 "1,1"
                 condition = [token[token.find("[") + 1:token.find("]")]] # 分离条件 "True"
 
                 if "," in do_when_true or "," in do_when_false:        #"[True]2;1,1"
@@ -39,23 +39,31 @@ class Auto_pilot_manager:#自动驾驶
                     do_when_false_list = do_when_false.split(",")
                     # 用"p"补齐两个分支的长度
                     max_len=max(len(do_when_true_list),len(do_when_false_list))
-                    do_when_true_list   += ["p"]*(max_len-len(do_when_true_list))
-                    do_when_false_list  += ["p"]*(max_len-len(do_when_false_list))
-
+                    do_when_true_list   += ["p"] * (max_len-len(do_when_true_list))
+                    do_when_false_list  += ["p"] * (max_len-len(do_when_false_list))
+                    # 打进“同上”标记 感谢Csugu的算法
                     for i in range(len(do_when_true_list)-1):
                         condition.append("Same as yesterday")
-                    for i in range(len(do_when_true_list)):
-                        self.to_do_list_normal.append(do_when_true_list[i])
-                        self.to_do_list_special.append(do_when_false_list[i])
-                        self.condition_list.append(condition[i])
+                    # 推入三大列表
+                    self.to_do_list_normal.extend(do_when_true_list)
+                    self.to_do_list_special.extend(do_when_false_list)
+                    self.condition_list.extend(condition)
                 else:
-                    self.to_do_list_normal.append(token[token.find("]") + 1:token.find(";")])
-                    self.to_do_list_special.append(token[token.find(";") + 1:])
-                    self.condition_list.append(token[token.find("[") + 1:token.find("]")])
+                    """
+                    两个分支仅一操作的情形
+                    """
+                    self.to_do_list_normal.append(do_when_true)
+                    self.to_do_list_special.append(do_when_false)
+                    self.condition_list.extend(condition)
             else:
+                """
+                此token不是条件语句
+                """
                 self.to_do_list_normal.append(token)
                 self.to_do_list_special.append("2")
                 self.condition_list.append("True")
+        assert len(self.to_do_list_normal)==len(self.to_do_list_special)==len(self.condition_list),\
+            "[IFAWL开发者断言错误]Autopilot三大列表长度必须相同-若你看到此行句子，请立即联系开发者"
         
     def test(self):
         print(self.to_do_list_normal)
