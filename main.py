@@ -106,7 +106,7 @@ class MyShip:
         进行回合中响应
         :return: 无
         """
-        operation = auto_pilot.get([self.shelter,self.missile,enemy.shelter,enemy.missile,0])
+        operation = auto_pilot.get_operation([self.shelter, self.missile, enemy.shelter, enemy.missile, 0])
         #print(operation)
         if self.missile < 1 and operation == "1":
             operation = "0"
