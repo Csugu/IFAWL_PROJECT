@@ -9,6 +9,9 @@ ALL_MATERIALS:list[str] = list(
 
 AL_META_DATA = json_loader.load("al_meta_data")
 """所有AL的元数据"""
+for al_str_index in AL_META_DATA.copy():
+    if int(al_str_index)>=19 and al_str_index != 30:
+        AL_META_DATA.pop(al_str_index)
 
 AL_RANK_LIST:dict[str,int] = {}
 """
