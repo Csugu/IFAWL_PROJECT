@@ -253,7 +253,6 @@ class Al_manager:
     def __init__(self):
         self.al_meta_data: dict[str, dict[str, str | int]] = json_loader.load("al_meta_data")
         self.all_al_list: dict[str, Al_general] = {}
-        # TODO 添加my_ship和enemy_ship字段并抽离所有的AL
 
     def choose_al(self, type_choosing: str | Literal["q", "w", "e", "all"]):
         if type_choosing == "all":
@@ -371,7 +370,7 @@ class Al_general:
         # [30] 岩河军工“湾区铃兰”饱和式蜂巢突击粒子炮      [粒子炮平台] [VIII] 1在仓库 >>[可以离站使用]<<
         print()
 
-    def in_choi(self):
+    def is_on_my_ship(self):
         return self in my_ship.al_list
 
     def add_atk(self, atk: int, type: str):
@@ -967,7 +966,7 @@ class Al21(Al_general):
                 self.report("急救")
 
     def print_self(self):
-        if self.in_choi():
+        if self.is_on_my_ship():
             if self.state <= 6:
                 print("/-/-/-/\n"*self.state)
             else:
