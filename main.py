@@ -36,7 +36,8 @@ class MyShip:
         al_str_list = storage_manager.get_al_on_ship()
         for position in range(len(al_str_list)):
             self.al_list[position] = al_manager.all_al_list.get(al_str_list[position], None)
-        self.total_al_rank = al_manager.get_total_al_rank()
+        self.update_total_al_rank()
+        self.update_platform()
 
     def update_total_al_rank(self):
         self.total_al_rank = 0
@@ -45,6 +46,12 @@ class MyShip:
                 self.total_al_rank += al.rank_num
             except AttributeError:
                 pass
+
+    def update_platform(self):
+        if not self.al_list[0]:
+            self.platform = "导弹"
+            return
+        self.platform = self.al_list[0].platform
 
     def print_self(self):
         for _ in range(self.shelter):
@@ -271,8 +278,8 @@ class Al_manager:
                 if not self.check_if_kick_e() or type_choosing == "q":
                     time.sleep(0.4)
                     break
-        my_ship.platform = self.get_platform()
         storage_manager.save_al_on_ship(my_ship.al_list)
+        my_ship.update_platform()
         my_ship.update_total_al_rank()
 
     def clear_al(self):
@@ -283,6 +290,7 @@ class Al_manager:
                 continue
             my_ship.al_list[index] = None
         storage_manager.save_al_on_ship(my_ship.al_list)
+        my_ship.update_platform()
         my_ship.update_total_al_rank()
 
     def get_total_al_rank(self):
@@ -310,11 +318,6 @@ class Al_manager:
             Txt.print_plus(f"请选用平台相同的终焉结或选择通用终焉结")
             return True
         return False
-
-    def get_platform(self) -> str:
-        if not my_ship.al_list[0]:
-            return "导弹"
-        return my_ship.al_list[0].platform
 
 al_manager = Al_manager()
 
