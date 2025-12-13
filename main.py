@@ -30,6 +30,7 @@ class MyShip:
         self.missile = 0
         self.al_list: list[Al_general | None] = [None, None, None]
         self.total_al_rank = 0
+        self.platform = "导弹"
 
     def load_al(self):
         al_str_list = storage_manager.get_al_on_ship()
@@ -48,8 +49,12 @@ class MyShip:
     def print_self(self):
         for _ in range(self.shelter):
             print("-----")
+        ammunition_type = {
+            "导弹": "[]",
+            "粒子炮": "|| "
+        }[self.platform]
         for _ in range(self.missile):
-            print("[]", end="")
+            print(ammunition_type, end="")
         print()
 
     def initialize(self):
@@ -122,11 +127,11 @@ class MyShip:
         match operation:
             case "0" | " ":
                 self.load(1)
-                voices.report("导弹", "上弹")
+                voices.report(self.platform, "上弹")
             case "1":
                 self.attack(1, DMG_TYPE_LIST[0])
                 self.load(-1)
-                voices.report("导弹", "发射")
+                voices.report(self.platform, "发射")
             case "2":
                 self.heal(1)
                 voices.report("护盾", "上盾")
@@ -266,6 +271,7 @@ class Al_manager:
                 if not self.check_if_kick_e() or type_choosing == "q":
                     time.sleep(0.4)
                     break
+        my_ship.platform = self.get_platform()
         storage_manager.save_al_on_ship(my_ship.al_list)
         my_ship.update_total_al_rank()
 
@@ -304,6 +310,11 @@ class Al_manager:
             Txt.print_plus(f"请选用平台相同的终焉结或选择通用终焉结")
             return True
         return False
+
+    def get_platform(self) -> str:
+        if not my_ship.al_list[0]:
+            return "导弹"
+        return my_ship.al_list[0].platform
 
 al_manager = Al_manager()
 
