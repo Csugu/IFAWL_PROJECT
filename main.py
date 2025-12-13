@@ -1194,6 +1194,7 @@ class MainLoops:
     def initialize_before_fight(self):
         my_ship.initialize()
         enemy.initialize()
+        auto_pilot.refresh()
         self.days = 1
 
     def fight_mainloop(self):
