@@ -117,6 +117,9 @@ class MyShip:
             operation = "0"
         if self.al_list[1] == al18 and operation == "2":
             operation = "w"
+        if self.al_list[1] == al21 and operation == "2":
+            al21.press_two()
+            operation = "pass"
         if al12.state != 0 and operation != "q" and not (self.al_list[1]==al16 and operation in ["w","2"]):
             al12.attack()
         if al15.state != 0 and operation == "1":
@@ -150,6 +153,8 @@ class MyShip:
                     self.al_list[2].react()
                 except AttributeError:
                     Txt.print_plus("注意·船上没有e系终焉结")
+            case "pass":
+                pass
             case _:
                 Txt.print_plus("你跳过了这一天！")
 
@@ -362,6 +367,9 @@ class Al_general:
         print(self.metadata["description_txt"])
         # [30] 岩河军工“湾区铃兰”饱和式蜂巢突击粒子炮      [粒子炮平台] [VIII] 1在仓库 >>[可以离站使用]<<
         print()
+
+    def in_choi(self):
+        return self in my_ship.al_list
 
     def add_atk(self, atk: int, type: str):
         """
@@ -929,6 +937,49 @@ class Al18(Al_general):
 
 al18 = Al18(18)
 
+class Al21(Al_general):
+
+    def press_two(self):
+        if self.state>2 and dice.probability(0.5):
+            al21.react()
+        else:
+            al21.state+=1
+            self.report("充注")
+
+    def react(self):
+        if self.state>0:           
+            my_ship.heal(int(self.state*1.5))            
+            self.state=0
+            self.report("主动凝固")
+        else:
+            self.state+=1
+            self.report("无屏障")
+            self.report("充注")
+
+    def operate_in_afternoon(self):
+        if my_ship.shelter<=0:
+            if self.state>0:
+                self.state-=1
+                my_ship.shelter=1
+                self.report("急救")
+
+    def print_self(self):
+        if self.in_choi():
+            if self.state <= 6:
+                print("/-/-/-/\n"*self.state)
+            else:
+                print(f"/-/-/-/ x{self.state}")
+
+    def suggest(self):
+        if self.state>=3:
+            return "[w]主动凝固|[2]充注液态护盾|请注意意外凝固风险"
+        elif self.state>0:
+            return "[w]主动凝固|[2]充注液态护盾|急救保护中"
+        else:
+            return "[2]充注液态护盾"
+
+
+al21 = Al21(21)
 
 class Al30(Al_general):
 
