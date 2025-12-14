@@ -9,9 +9,6 @@ ALL_MATERIALS:list[str] = list(
 
 AL_META_DATA = json_loader.load("al_meta_data")
 """所有AL的元数据"""
-for al_str_index in AL_META_DATA.copy():
-    if int(al_str_index)>=20 and al_str_index != "30" and al_str_index != "24":
-        AL_META_DATA.pop(al_str_index)
 
 AL_RANK_LIST:dict[str,int] = {}
 """
@@ -279,7 +276,7 @@ class IndustryContract(Contract):
 
 class Contract_manager:
 
-    def __init__(self,storage_manager):
+    def __init__(self,storage_manager,all_al_str_list:list[str]):
         self.storage_manager = storage_manager
         self.contract_type_list = [
             MaterialContract,
@@ -289,6 +286,9 @@ class Contract_manager:
             SsdContract
         ]
         self.all_contracts_list = []
+        for key in AL_META_DATA.copy():
+            if key not in all_al_str_list:
+                AL_META_DATA.pop(key)
 
     def generate_all_contracts(self):
         self.all_contracts_list.clear()
