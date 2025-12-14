@@ -10,7 +10,7 @@ from core.Module2_json_loader import json_loader
 from modules.Module3_storage_manager import storage_manager
 from modules.Module4_voices import voices
 from core.Module5_dice import dice
-from modules.Module6_market_manager import Contract_manager, Contract
+from modules.Module6_market_manager import Contract_manager, Contract,tools
 from modules.Module7_auto_pilot import auto_pilot
 from modules.Module8_al_industry import recipe_for_all_al
 
@@ -347,7 +347,13 @@ class Al_general:
         self.skin_list: list[str] = al_manager.al_meta_data[str(index)].get("skin_list", [])
         self.platform: str = al_manager.al_meta_data[str(index)]["platform"]
         self.metadata: dict[str, str | int] = al_manager.al_meta_data[str(index)]
+
+        # industry字段
         self.recipe = recipe_for_all_al[str(self.index)]
+        self.recipe["联邦信用点"] = 1100 * self.rank_num
+        self.is_craftable = False
+
+        # 签名
         al_manager.all_al_list[str(self.index)] = self
 
         # operation 字段
@@ -449,6 +455,34 @@ class Al_general:
     def operate_in_our_turn(self):
         pass
 
+    def refresh_craftable_tag(self):
+        """
+        刷新自己能否被合成
+        :return: 无
+        """
+        self.is_craftable = tools.is_affordable(self.recipe,storage_manager.show_assets())
+
+    def print_recipe(self,assets:dict[str,int]):
+        if self.rank_num == 0:
+            return
+        # 基本信息
+        str1 = f"[{self.index}]" + self.len_name + f" [{self.metadata['rank']}]"
+        print((Txt.adjust(str1,45)), end="")
+        # 可合成性
+        if self.is_craftable:
+            craftable_tag = "[可合成●]"
+        else:
+            craftable_tag = "[不可合成]"
+        print(Txt.adjust(craftable_tag,12), end="")
+        # 本终焉结存货
+        print(f"现有 {assets[str(self.index)]} 在仓库")
+        # 物品存货
+        for item in self.recipe:
+            note = "[▲]" if self.recipe[item] > assets[item] else ""
+            str0 = f"|-{item}x{self.recipe[item]}/{assets[item]}{note}"
+            print(Txt.adjust(str0,22), end="")
+        print()
+        print()
 
 class Al3(Al_general):
 
@@ -1515,6 +1549,9 @@ class MainLoops:
                 except IndexError:
                     print("合同不存在")
 
+    @staticmethod
+    def industry_mainloop():
+        
 
 main_loops = MainLoops()
 
