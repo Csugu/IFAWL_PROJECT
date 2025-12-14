@@ -13,8 +13,6 @@ from core.Module5_dice import dice
 from modules.Module6_market_manager import Contract_manager, Contract
 from modules.Module7_auto_pilot import auto_pilot
 
-contract_manager = Contract_manager(storage_manager)
-
 DMG_TYPE_LIST: dict[int, str] = {
     0: "missile_launch",  # 导弹射击
     1: "particle_cannon_shooting",  # 粒子炮射击
@@ -1263,6 +1261,7 @@ class StationTreesManager:
 
 station_trees_manager = StationTreesManager()
 
+contract_manager = Contract_manager(storage_manager,list(al_manager.all_al_list.keys()))
 
 class MainLoops:
 
