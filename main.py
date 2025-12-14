@@ -231,7 +231,14 @@ class EnemyShip:
         self.shelter = 2
 
     def react(self):
-        operation = random.choice(["0", "1", "2"])
+        if self.shelter < 1:  # 如果护盾已被削弱
+            operation = "2"  # 优先治疗
+        elif self.missile < 1:  # 如果导弹没有了
+            operation = "0"  # 优先上弹
+        elif self.shelter < 2:  # 如果护盾不满
+            operation = random.choice(["1", "2"])  # 有一定概率进行攻击或治疗
+        else:
+            operation = random.choice(["0", "1", "2"])  # 正常情况下随机选择操作
         if self.missile < 1 and operation == "1":
             operation = "0"
         match operation:
