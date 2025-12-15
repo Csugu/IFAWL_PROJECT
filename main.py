@@ -241,7 +241,7 @@ class EnemyShip:
             operation = random.choice(["0", "1", "2"])  # 正常情况下随机选择操作
         if self.missile < 1 and operation == "1":
             operation = "0"
-        operation = al26.check_if_control(operation)#眠雀控制
+        operation = al26.check_if_control(operation) # 眠雀控制
         match operation:
             case "0":
                 self.load(1)
@@ -1245,40 +1245,40 @@ class Al26(Al_general):
 
     def react(self):
         if self.state == 0:
-            self.state=3
+            self.state = 3
             self.report("启动报告")
 
     def operate_in_afternoon(self):
-        if self.state<0:
-            self.state+=1
+        if self.state < 0:
+            self.state += 1
 
-    def check_if_myturn(self):
+    def is_my_turn(self):
         if self.state == 3:
-            self.state-=1
+            self.state -= 1
             return 1
         return 0
 
     def check_if_control(self,operation:str)->str:
-        if self.state>0:
-            self.report("控制成功")
-            enemy_dicision_by_me=Txt.ask_plus("[眠雀]选择敌方操作",["0","1","2"])
-            self.state-=1
-            if operation == enemy_dicision_by_me:
-                self.report("谐振成功")
-                my_ship.attack(1,DMG_TYPE_LIST[3])
-                self.state+=1
-            if self.state == 0:
-                self.state=-5
-            return enemy_dicision_by_me
-        else:
+        if self.state <= 0:
             return operation
+        self.report("控制成功")
+        enemy_decision_by_me = Txt.ask_plus("[眠雀]选择敌方操作",["0","1","2"])
+        self.state -= 1
+        if operation == enemy_decision_by_me:
+            self.report("谐振成功")
+            my_ship.attack(1,DMG_TYPE_LIST[3])
+            self.state += 1
+        if self.state == 0:
+            self.state = -5
+        return enemy_decision_by_me
+
 
     def suggest(self):
         if self.state == 0:
             return "[e]控制敌方两次行动"
-        elif self.state<0:
+        elif self.state < 0:
             return f"[冷却中]剩余{-self.state}天"
-        elif self.state>0 and dice.current_who == 1:
+        elif self.state > 0 and dice.current_who == 1:
             return f"[生效中]剩余{self.state}次"
         else:
             return "[支配中]输入敌方指令[0]装弹|[1]发射|[2]上盾"
@@ -1543,15 +1543,20 @@ class MainLoops:
         auto_pilot.refresh()
         self.days = 1
 
-    def force_advance_check(self) -> Literal[-1,0,1]:
-        if al26.check_if_myturn() == 1:
+    @staticmethod
+    def get_force_advance() -> Literal[-1,0,1]:
+        """
+        判定是否强制使某一方行动
+        :return: 1代表我方，-1代表敌方，0代表不强制
+        """
+        if al26.is_my_turn():
             return 1
         return 0
 
     def fight_mainloop(self):
         while 1:
             # dawn
-            who = dice.decide_who(force_advance=self.force_advance_check())
+            who = dice.decide_who(force_advance=self.get_force_advance())
             time.sleep(0.4)
             field_printer.print_basic_info(self.days)
             field_printer.print_for_fight(my_ship, enemy)
