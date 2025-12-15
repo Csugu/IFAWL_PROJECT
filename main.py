@@ -241,6 +241,7 @@ class EnemyShip:
             operation = random.choice(["0", "1", "2"])  # 正常情况下随机选择操作
         if self.missile < 1 and operation == "1":
             operation = "0"
+        operation = al26.check_if_control(operation)#眠雀控制
         match operation:
             case "0":
                 self.load(1)
@@ -1240,6 +1241,87 @@ class Al25(Al_general):
 
 al25 = Al25(25)
 
+class Al26(Al_general):
+
+    def react(self):
+        if self.state == 0:
+            self.state=3
+            self.report("启动报告")
+
+    def operate_in_afternoon(self):
+        if self.state<0:
+            self.state+=1
+
+    def check_if_myturn(self):
+        if self.state == 3:
+            self.state-=1
+            return 1
+        return 0
+
+    def check_if_control(self,operation:str)->str:
+        if self.state>0:
+            self.report("控制成功")
+            enemy_dicision_by_me=Txt.ask_plus("[眠雀]选择敌方操作",["0","1","2"])
+            self.state-=1
+            if operation == enemy_dicision_by_me:
+                self.report("谐振成功")
+                my_ship.attack(1,DMG_TYPE_LIST[3])
+                self.state+=1
+            if self.state == 0:
+                self.state=-5
+            return enemy_dicision_by_me
+        else:
+            return operation
+
+    def suggest(self):
+        if self.state == 0:
+            return "[e]控制敌方两次行动"
+        elif self.state<0:
+            return f"[冷却中]剩余{-self.state}天"
+        elif self.state>0 and dice.current_who == 1:
+            return f"[生效中]剩余{self.state}次"
+        else:
+            return "[支配中]输入敌方指令[0]装弹|[1]发射|[2]上盾"
+
+
+al26 = Al26(26)
+
+class Al27(Al_general):#瞳猫
+
+    def react(self):
+        if self.state<9:
+            self.state+=1
+            self.report("充能")
+
+    def operate_in_morning(self):
+        if self.is_on_my_ship and dice.current_who == 1 and self.state<9:
+            self.state+=1
+
+    def add_atk(self, atk, type):
+        """
+        瞳猫只是一只小猫，他不会对你的攻击造成加成
+        只是我需要写在这里方便在atk时调用罢了
+        """
+        if self.is_on_my_ship and self.state>0:
+            self.state=0
+            self.report("层数清空")
+        return atk
+
+    def reduce_enemy_attack(self, atk):
+        if self.is_on_my_ship and atk > 0:
+            if dice.probability(self.state*0.1-(my_ship.shelter+al14.state-1)*0.12):
+                atk=0
+                self.report("喵")
+        return atk
+
+    def suggest(self):
+        if self.state<9:
+            return f"[e]提升层数|{self.state}层|当前闪避率>>{self.state*10-(my_ship.shelter+al14.state-1)*12}%"
+        else:
+            return f"[层数已满]|{self.state}层|当前闪避率>>{self.state*10-(my_ship.shelter+al14.state-1)*12}%"
+
+al27 = Al27(27)
+
 class Al30(Al_general):
 
     def react(self):
@@ -1457,12 +1539,19 @@ class MainLoops:
     def initialize_before_fight(self):
         my_ship.initialize()
         enemy.initialize()
+        dice.set_probability(0.8)
         auto_pilot.refresh()
         self.days = 1
+
+    def force_advance_check(self) -> Literal[-1,0,1]:
+        if al26.check_if_myturn() == 1:
+            return 1
+        return 0
 
     def fight_mainloop(self):
         while 1:
             # dawn
+            who = dice.decide_who(force_advance=self.force_advance_check())
             time.sleep(0.4)
             field_printer.print_basic_info(self.days)
             field_printer.print_for_fight(my_ship, enemy)
@@ -1475,7 +1564,6 @@ class MainLoops:
                     al.operate_in_morning()
 
             # noon
-            who = dice.decide_who()
             if who == 1:
                 Txt.print_plus("今天由我方行动")
                 my_ship.react()
