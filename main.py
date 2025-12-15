@@ -13,6 +13,7 @@ from core.Module5_dice import dice
 from modules.Module6_market_manager import Contract_manager, Contract,tools
 from modules.Module7_auto_pilot import auto_pilot
 from modules.Module8_al_industry import recipe_for_all_al
+from modules.Module9_entry_manager import entry_manager
 
 class DamageType:
     """伤害类型枚举"""
@@ -1680,15 +1681,48 @@ class MainLoops:
             Txt.print_plus(f"{current_al.len_name}*1 合成完成·已送至装备仓库并铭刻您的代号")
             Txt.input_plus("")
 
-
+    @staticmethod
+    def entry_choosing_mainloop():
+        while 1:
+            print()
+            entry_manager.print_all_descriptions()
+            inp_index = Txt.input_plus("请输入要修改或加入的词条 [0]清空词条 [all]选择所有词条 [enter]退出>>>")
+            print()
+            match inp_index:
+                case "0":
+                    entry_manager.clear_all()
+                    Txt.print_plus("所有词条已被清空")
+                    continue
+                case "all":
+                    entry_manager.push_all_full()
+                    Txt.print_plus("所有词条已被推至最高难度·警告·高难")
+                    continue
+                case "":
+                    break
+                case _:
+                    pass
+            try:
+                entry = entry_manager.all_entries[inp_index]
+                entry.print_description()
+                inp_rank = Txt.input_plus("请输入词条难度等级")
+                print()
+                entry.set_rank(int(inp_rank))
+                Txt.print_plus(f"[{entry.index}]{entry.title}{entry.RANK_STR_LIST[entry.current_rank]} 已激活")
+            except KeyError:
+                Txt.print_plus("请输入有效的词条编号")
+            except ValueError:
+                Txt.print_plus("请输入有效的词条等级")
 
 main_loops = MainLoops()
 
-if __name__ == "__main__":
-    storage_manager.login()
-    my_ship.load_al()
-    while 1:
-        main_loops.station_mainloop()
+#if __name__ == "__main__":
+#    storage_manager.login()
+#    my_ship.load_al()
+#    while 1:
+#        main_loops.station_mainloop()
+#
+#        main_loops.initialize_before_fight()
+#        main_loops.fight_mainloop()
 
-        main_loops.initialize_before_fight()
-        main_loops.fight_mainloop()
+if __name__ == "__main__":
+    main_loops.entry_choosing_mainloop()
