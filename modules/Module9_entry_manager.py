@@ -24,9 +24,13 @@ class Entry:
         self.point = 0
 
     def set_rank(self,rank:int):
+        """
+        设置词条等级，若输入非法则报ValueError
+        :param rank: 要设置的等级
+        :return: 无
+        """
         if rank < 0 or rank > self.max_rank:
-            print_plus("请输入有效的词条等级")
-            return
+            raise ValueError
         self.current_rank = rank
         self.point = self.points_list[rank]
 
@@ -48,4 +52,11 @@ class EntryManager:
         for entry in self.all_entries.values():
             entry.print_description()
 
+    def clear_all(self):
+        for entry in self.all_entries.values():
+            entry.current_rank = 0
+
+    def push_all_full(self):
+        for entry in self.all_entries.values():
+            entry.current_rank = entry.max_rank
 entry_manager = EntryManager()

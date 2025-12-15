@@ -1681,7 +1681,37 @@ class MainLoops:
             Txt.print_plus(f"{current_al.len_name}*1 合成完成·已送至装备仓库并铭刻您的代号")
             Txt.input_plus("")
 
-
+    @staticmethod
+    def entry_choosing_mainloop():
+        while 1:
+            print()
+            entry_manager.print_all_descriptions()
+            inp_index = Txt.input_plus("请输入要修改或加入的词条 [0]清空词条 [all]选择所有词条 [enter]退出>>>")
+            print()
+            match inp_index:
+                case "0":
+                    entry_manager.clear_all()
+                    Txt.print_plus("所有词条已被清空")
+                    continue
+                case "all":
+                    entry_manager.push_all_full()
+                    Txt.print_plus("所有词条已被推至最高难度·警告·高难")
+                    continue
+                case "":
+                    break
+                case _:
+                    pass
+            try:
+                entry = entry_manager.all_entries[inp_index]
+                entry.print_description()
+                inp_rank = Txt.input_plus("请输入词条难度等级")
+                print()
+                entry.set_rank(int(inp_rank))
+                Txt.print_plus(f"[{entry.index}]{entry.title}{entry.RANK_STR_LIST[entry.current_rank]} 已激活")
+            except KeyError:
+                Txt.print_plus("请输入有效的词条编号")
+            except ValueError:
+                Txt.print_plus("请输入有效的词条等级")
 
 main_loops = MainLoops()
 
@@ -1695,4 +1725,4 @@ main_loops = MainLoops()
 #        main_loops.fight_mainloop()
 
 if __name__ == "__main__":
-    entry_manager.print_all_descriptions()
+    main_loops.entry_choosing_mainloop()
