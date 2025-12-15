@@ -3,8 +3,10 @@ from typing import Literal
 
 class Dice:
 
+    current_who=0
+
     def __init__(self):
-        self.probability_current = 0.2
+        self.probability_current = 0.8
         self.di = 0.3
 
     def set_probability(self,val:float):
@@ -15,17 +17,30 @@ class Dice:
         """
         self.probability_current = val
 
-    def decide_who(self) -> Literal[0,1]:
+    def decide_who(self,force_advance:Literal[-1,0,1]=0) -> Literal[0,1]:
         """
         决定谁来进行下一回合，并进行马尔科夫链变化
         :return: 1表示我方，0表示敌方
         """
-        if random.random()<self.probability_current:
+        match force_advance:
+            case 1:
+                self.current_who=1
+            case -1:
+                self.current_who=0
+            case 0:
+                if random.random()<self.probability_current:
+                    self.current_who=1
+                else:
+                    self.current_who=0
+            case _:
+                assert False,"[IFAWL开发者断言错误]force_advance必须为某些值-若你看到此行句子，请立即联系开发者"
+
+        if self.current_who == 1:
             self.probability_current -= self.di
-            return 1
         else:
-            self.probability_current += self.di
-            return 0
+            self.probability_current += self.di 
+
+        return self.current_who
 
     @staticmethod
     def probability(pro:float) -> bool:

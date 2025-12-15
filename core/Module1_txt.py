@@ -200,3 +200,14 @@ def dict_give_and_get_print(father: dict, get: dict, give: dict):
         elif i == "保险点":
             print_main(1)
     print()
+
+def ask_plus(txt:str,kword:list):
+    kword_str = kword.copy()
+    kword_str = [str(j) for j in kword]
+    while 1:
+        inp=input_plus(txt)
+        if inp in kword_str:
+            break
+        else:
+            print("请在可选范围内输入")
+    return  inp
