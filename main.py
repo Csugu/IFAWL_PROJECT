@@ -13,6 +13,7 @@ from core.Module5_dice import dice
 from modules.Module6_market_manager import Contract_manager, Contract,tools
 from modules.Module7_auto_pilot import auto_pilot
 from modules.Module8_al_industry import recipe_for_all_al
+from modules.Module9_entry_manager import entry_manager
 
 class DamageType:
     """伤害类型枚举"""
@@ -1684,11 +1685,14 @@ class MainLoops:
 
 main_loops = MainLoops()
 
-if __name__ == "__main__":
-    storage_manager.login()
-    my_ship.load_al()
-    while 1:
-        main_loops.station_mainloop()
+#if __name__ == "__main__":
+#    storage_manager.login()
+#    my_ship.load_al()
+#    while 1:
+#        main_loops.station_mainloop()
+#
+#        main_loops.initialize_before_fight()
+#        main_loops.fight_mainloop()
 
-        main_loops.initialize_before_fight()
-        main_loops.fight_mainloop()
+if __name__ == "__main__":
+    entry_manager.print_all_descriptions()
