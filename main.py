@@ -14,13 +14,12 @@ from modules.Module6_market_manager import Contract_manager, Contract,tools
 from modules.Module7_auto_pilot import auto_pilot
 from modules.Module8_al_industry import recipe_for_all_al
 
-DMG_TYPE_LIST: dict[int, str] = {
-    0: "missile_launch",  # 导弹射击
-    1: "particle_cannon_shooting",  # 粒子炮射击
-    2: "enemy_missile_boom",  # 敌方导弹殉爆
-    3: "ordinary_attack"  # 杂项攻击
-}
-
+class DamageType:
+    """伤害类型枚举"""
+    MISSILE_LAUNCH = "missile_launch"            # 导弹射击
+    PARTICLE_CANNON_SHOOTING = "particle_cannon_shooting"  # 粒子炮射击
+    ENEMY_MISSILE_BOOM = "enemy_missile_boom"    # 敌方导弹殉爆
+    ORDINARY_ATTACK = "ordinary_attack"          # 杂项攻击
 
 class MyShip:
 
@@ -140,7 +139,7 @@ class MyShip:
                 self.load(1)
                 voices.report(self.platform, "上弹")
             case "1":
-                self.attack(1, DMG_TYPE_LIST[0])
+                self.attack(1, DamageType.MISSILE_LAUNCH)
                 self.load(-1)
                 voices.report(self.platform, "发射")
             case "2":
@@ -241,7 +240,7 @@ class EnemyShip:
             operation = random.choice(["0", "1", "2"])  # 正常情况下随机选择操作
         if self.missile < 1 and operation == "1":
             operation = "0"
-        operation = al26.check_if_control(operation)#眠雀控制
+        operation = al26.get_controlled_operation(operation) # 眠雀控制
         match operation:
             case "0":
                 self.load(1)
@@ -501,7 +500,7 @@ class Al3(Al_general):
 
     def react(self):
         if dice.probability(0.3 * enemy.shelter):
-            my_ship.attack(1, DMG_TYPE_LIST[3])
+            my_ship.attack(1, DamageType.ORDINARY_ATTACK)
             self.report("命中")
         else:
             self.report("未命中")
@@ -563,7 +562,7 @@ class Al5(Al_general):  # 水银
         else:
             self.state = 0
             if random.randint(0, 9) > -1:
-                my_ship.attack(2, DMG_TYPE_LIST[0])
+                my_ship.attack(2, DamageType.MISSILE_LAUNCH)
                 self.report("命中")
             else:
                 self.report("未命中")
@@ -625,7 +624,7 @@ class Al7(Al_general):
     def operate_in_morning(self):
         if self.state == 1:
             if dice.probability(0.6):
-                my_ship.attack(1, DMG_TYPE_LIST[2])
+                my_ship.attack(1, DamageType.ENEMY_MISSILE_BOOM)
                 time.sleep(0.4)
                 self.report("引爆成功")
             else:
@@ -745,7 +744,7 @@ class Al11(Al_general):
             self.report("收到")
             self.report("归来")
         elif self.state == 2:
-            my_ship.attack(1, DMG_TYPE_LIST[3])
+            my_ship.attack(1, DamageType.ORDINARY_ATTACK)
             my_ship.heal(1)
             self.state -= 1
             self.report("为了身后的苍生")
@@ -777,14 +776,14 @@ class Al12(Al_general):
             self.state += 1
             self.report("充能中")
         else:
-            my_ship.attack(self.atk_list[self.state], DMG_TYPE_LIST[1])
+            my_ship.attack(self.atk_list[self.state], DamageType.PARTICLE_CANNON_SHOOTING)
             # p_c_manager.boom_now()
             self.state = 0
             self.report("过热")
 
     def attack(self):
         if self.atk_list[self.state] != 0:
-            my_ship.attack(self.atk_list[self.state], DMG_TYPE_LIST[1])
+            my_ship.attack(self.atk_list[self.state], DamageType.PARTICLE_CANNON_SHOOTING)
             # p_c_manager.boom_now()
             self.state = 0
             self.report("攻击")
@@ -821,11 +820,11 @@ class Al13(Al_general):
             self.report("导弹不足")
         elif my_ship.missile == 1:
             my_ship.missile -= 1
-            my_ship.attack(1, DMG_TYPE_LIST[0])
+            my_ship.attack(1, DamageType.MISSILE_LAUNCH)
             self.report("单导弹导航")
         else:
             my_ship.missile -= 2
-            my_ship.attack(2, DMG_TYPE_LIST[0])
+            my_ship.attack(2, DamageType.MISSILE_LAUNCH)
             self.report("全功率导航")
 
     def suggest(self):
@@ -899,7 +898,7 @@ class Al15(Al_general):
             if self.state == 1:
                 if my_ship.missile > 0:
                     my_ship.missile -= 1
-                    my_ship.attack(1, DMG_TYPE_LIST[0])
+                    my_ship.attack(1, DamageType.MISSILE_LAUNCH)
                     self.state = 2
                     self.report("攻击")
                 else:
@@ -962,7 +961,7 @@ class Al17(Al_general):
             self.report("护盾不足")
         else:
             enemy.attack(1)
-            my_ship.attack(2, DMG_TYPE_LIST[0])
+            my_ship.attack(2, DamageType.MISSILE_LAUNCH)
             my_ship.missile -= 1
             self.report("攻击成功")
 
@@ -1092,7 +1091,7 @@ al21 = Al21(21)
 class Al22(Al_general):
     def react(self):
         if self.state == 0:
-            my_ship.attack(1,DMG_TYPE_LIST[3])
+            my_ship.attack(1,DamageType.ORDINARY_ATTACK)
             self.state=-3
             self.report("攻击")
         else:
@@ -1100,7 +1099,7 @@ class Al22(Al_general):
 
     def operate_in_afternoon(self):
         if self.state == -3 and enemy.shelter<=0:
-            my_ship.attack(1,DMG_TYPE_LIST[3])
+            my_ship.attack(1,DamageType.ORDINARY_ATTACK)
             self.report("处决")
         if self.state == -1:
             self.report("就绪")
@@ -1127,7 +1126,7 @@ class Al23(Al_general):
         for i in range(3):
             if my_ship.missile>0:
                 my_ship.load(-1)
-                my_ship.attack(1,DMG_TYPE_LIST[0])
+                my_ship.attack(1,DamageType.MISSILE_LAUNCH)
                 self.report("攻击成功")
             else:
                 my_ship.load(1)
@@ -1158,7 +1157,7 @@ class Al24(Al_general):
             self.state += 5
             while self.state:
                 enemy.missile -= 1
-                my_ship.attack(1,DMG_TYPE_LIST[2])
+                my_ship.attack(1,DamageType.ENEMY_MISSILE_BOOM)
                 self.report("攻击成功")#
                 self.state-=1
                 if dice.probability(0.4*(4-self.state)):
@@ -1211,7 +1210,7 @@ class Al25(Al_general):
             self.report("拦截")
             self.state-=1
             if dice.probability(0.3):
-                my_ship.attack(1,DMG_TYPE_LIST[3])#
+                my_ship.attack(1,DamageType.ORDINARY_ATTACK)#
                 self.report("反击")
             if self.state == 0:
                 self.state=-5
@@ -1245,40 +1244,40 @@ class Al26(Al_general):
 
     def react(self):
         if self.state == 0:
-            self.state=3
+            self.state = 3
             self.report("启动报告")
 
     def operate_in_afternoon(self):
-        if self.state<0:
-            self.state+=1
+        if self.state < 0:
+            self.state += 1
 
-    def check_if_myturn(self):
+    def is_my_turn(self):
         if self.state == 3:
-            self.state-=1
+            self.state -= 1
             return 1
         return 0
 
-    def check_if_control(self,operation:str)->str:
-        if self.state>0:
-            self.report("控制成功")
-            enemy_dicision_by_me=Txt.ask_plus("[眠雀]选择敌方操作",["0","1","2"])
-            self.state-=1
-            if operation == enemy_dicision_by_me:
-                self.report("谐振成功")
-                my_ship.attack(1,DMG_TYPE_LIST[3])
-                self.state+=1
-            if self.state == 0:
-                self.state=-5
-            return enemy_dicision_by_me
-        else:
+    def get_controlled_operation(self, operation:str)->str:
+        if self.state <= 0:
             return operation
+        self.report("控制成功")
+        controlled_operation = Txt.ask_plus("[眠雀]选择敌方操作",["0","1","2"])
+        self.state -= 1
+        if operation == controlled_operation:
+            self.report("谐振成功")
+            my_ship.attack(1,DamageType.ORDINARY_ATTACK)
+            self.state += 1
+        if self.state == 0:
+            self.state = -5
+        return controlled_operation
+
 
     def suggest(self):
         if self.state == 0:
             return "[e]控制敌方两次行动"
-        elif self.state<0:
+        elif self.state < 0:
             return f"[冷却中]剩余{-self.state}天"
-        elif self.state>0 and dice.current_who == 1:
+        elif self.state > 0 and dice.current_who == 1:
             return f"[生效中]剩余{self.state}次"
         else:
             return "[支配中]输入敌方指令[0]装弹|[1]发射|[2]上盾"
@@ -1289,28 +1288,28 @@ al26 = Al26(26)
 class Al27(Al_general):#瞳猫
 
     def react(self):
-        if self.state<9:
-            self.state+=1
+        if self.state < 9:
+            self.state += 1
             self.report("充能")
 
     def operate_in_morning(self):
-        if self.is_on_my_ship and dice.current_who == 1 and self.state<9:
-            self.state+=1
+        if self.is_on_my_ship and dice.current_who == 1 and self.state < 9:
+            self.state += 1
 
     def add_atk(self, atk, type):
         """
         瞳猫只是一只小猫，他不会对你的攻击造成加成
         只是我需要写在这里方便在atk时调用罢了
         """
-        if self.is_on_my_ship and self.state>0:
-            self.state=0
+        if self.is_on_my_ship and self.state > 0:
+            self.state = 0
             self.report("层数清空")
         return atk
 
     def reduce_enemy_attack(self, atk):
         if self.is_on_my_ship and atk > 0:
             if dice.probability(self.state*0.1-(my_ship.shelter+al14.state-1)*0.12):
-                atk=0
+                atk = 0
                 self.report("喵")
         return atk
 
@@ -1326,7 +1325,7 @@ class Al30(Al_general):
 
     def react(self):
         if self.state == 0:
-            my_ship.attack(2, DMG_TYPE_LIST[1])
+            my_ship.attack(2, DamageType.PARTICLE_CANNON_SHOOTING)
             self.state -= 5
             self.report("正常攻击")
             # p_c_manager.boom_now()
@@ -1334,7 +1333,7 @@ class Al30(Al_general):
             enemy.attack(2)
             voices.report("护盾", "湾区铃兰导致扣血")
             self.report("牺牲护盾发射")
-            my_ship.attack(2, DMG_TYPE_LIST[1])
+            my_ship.attack(2, DamageType.PARTICLE_CANNON_SHOOTING)
             # p_c_manager.boom_now()
 
     def add_atk(self, atk: int, type: str) -> int:
@@ -1543,15 +1542,20 @@ class MainLoops:
         auto_pilot.refresh()
         self.days = 1
 
-    def force_advance_check(self) -> Literal[-1,0,1]:
-        if al26.check_if_myturn() == 1:
+    @staticmethod
+    def get_force_advance() -> Literal[-1,0,1]:
+        """
+        判定是否强制使某一方行动
+        :return: 1代表我方，-1代表敌方，0代表不强制
+        """
+        if al26.is_my_turn():
             return 1
         return 0
 
     def fight_mainloop(self):
         while 1:
             # dawn
-            who = dice.decide_who(force_advance=self.force_advance_check())
+            who = dice.decide_who(force_advance=self.get_force_advance())
             time.sleep(0.4)
             field_printer.print_basic_info(self.days)
             field_printer.print_for_fight(my_ship, enemy)
