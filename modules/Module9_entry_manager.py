@@ -1,4 +1,5 @@
 from typing import Literal
+import random
 
 from core.Module1_txt import print_plus,Tree
 from core.Module2_json_loader import json_loader
@@ -23,6 +24,7 @@ class Entry:
         self.points_list:list[int]      = self.metadata["points"]
         self.description_list:list[str] = self.metadata["description_txt"]
         self.summary:str                = self.metadata["summary"]
+        self.reaction:str               = self.metadata["reaction"]
 
         # 通用查表字段
         self.RANK_STR_LIST = ["","I","II","III","IV","V"]
@@ -52,11 +54,26 @@ class Entry:
 
         Tree(title,body).print_self()
 
+    def print_when_react(self):
+        print_plus(f"[警告] 词条 {self.title} 被触发 >>> {self.reaction}")
+
+    def is_not_full(self) -> bool:
+        """
+        检查自己的flow_rank是否满级
+        :return: True代表未满级（可升级）
+        """
+        return self.flow_rank < self.max_rank
+
 class EntryManager:
 
     def __init__(self):
         self.all_entries = {index:Entry(index) for index in ALL_ENTRY_METADATA}
         self.current_mode:Literal["FIGHT","DISASTER","INFINITY"] = "FIGHT"
+
+    # 设置模式
+
+    def set_mode(self,mode:Literal["FIGHT","DISASTER","INFINITY"]):
+        self.current_mode = mode
 
     # 词条选择方法
 
@@ -91,11 +108,34 @@ class EntryManager:
             return self.all_entries[index].selected_rank
         return self.all_entries[index].flow_rank
 
+    def push_up(self):
+        """
+        将词条库中的某个词条上推一级
+        :return: 无
+        """
+        entry_list = list(self.all_entries.values())
+        random.shuffle(entry_list)
+        for entry in entry_list:
+            if entry.is_not_full():
+                entry.flow_rank += 1
+                print_plus(f"[警告]{entry.title} 等级{entry.RANK_STR_LIST[entry.flow_rank]} 已被激活 >>> {entry.description_list[entry.flow_rank]}")
+                break
+
     # 战斗方法
 
     def check_and_add_atk(self,atk) -> int:
         if dice.probability(self.get_rank_of("1")*0.2):
             atk += 1
+            self.all_entries["1"].print_when_react()
+        return atk
+
+    def check_and_reduce_atk(self,atk) -> int:
+        if self.get_rank_of("3") == 1 and atk > 1 and dice.probability(0.3):
+            atk -= 1
+            self.all_entries["3"].print_when_react()
+        elif self.get_rank_of("3") == 2 and dice.probability(0.3):
+            atk -= 1
+            self.all_entries["3"].print_when_react()
         return atk
 
 entry_manager = EntryManager()
