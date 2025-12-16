@@ -1575,6 +1575,7 @@ class MainLoops:
                 entry_manager.push_up()
             time.sleep(0.4)
             field_printer.print_basic_info(self.days)
+            entry_manager.print_all_flow_rank()
             field_printer.print_for_fight(my_ship, enemy)
             field_printer.print_suggestion()
             field_printer.print_key_prompt()
