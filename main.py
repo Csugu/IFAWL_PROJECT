@@ -1709,7 +1709,7 @@ class MainLoops:
                 inp_rank = Txt.input_plus("请输入词条难度等级")
                 print()
                 entry.set_rank(int(inp_rank))
-                Txt.print_plus(f"[{entry.index}]{entry.title}{entry.RANK_STR_LIST[entry.current_rank]} 已激活")
+                Txt.print_plus(f"[{entry.index}]{entry.title}{entry.RANK_STR_LIST[entry.selected_rank]} 已激活")
             except KeyError:
                 Txt.print_plus("请输入有效的词条编号")
             except ValueError:
