@@ -127,6 +127,17 @@ class EntryManager:
         for entry in self.all_entries.values():
             entry.flow_rank = 0
 
+    def print_all_flow_rank(self):
+        print()
+        out = ""
+        for entry in self.all_entries.values():
+            if entry.flow_rank != 0:
+                out += f"{entry.title}[{entry.RANK_STR_LIST[entry.flow_rank]}]  "
+        if not out:
+            out = "[无激活词条]"
+        print(out)
+        print()
+
     # 战斗方法
 
     def check_and_add_atk(self,atk) -> int:
