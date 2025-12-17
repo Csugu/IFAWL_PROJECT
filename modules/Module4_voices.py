@@ -24,4 +24,25 @@ class Voices:
             Txt.print_plus(txt)
         except KeyError:
             print(f"语音未定义-[{who}]{theme}")
+
+    def inject_and_report(self, who:str, theme:str, data_injected=None, print_who=True):
+        """
+        注入数据并展示voices.json中记录的语音内容
+        :param who: 语音发出者
+        :param theme: 语音主题
+        :param print_who: 是否打印语音发出者
+        :param data_injected: 注入字典
+        :return:
+        """
+        if data_injected is None:
+            data_injected = {}
+        try:
+            if print_who:
+                txt:str = f"[{who}]" + random.choice(self.voices[who][theme])
+            else:
+                txt:str = random.choice(self.voices[who][theme])
+            formatted_txt = txt.format_map(data_injected)
+            Txt.print_plus(formatted_txt)
+        except KeyError:
+            print(f"语音未定义-[{who}]{theme}")
 voices = Voices()
