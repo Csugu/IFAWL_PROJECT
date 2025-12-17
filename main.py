@@ -382,6 +382,15 @@ class Al_general:
         """
         voices.report(self.short_name, theme)
 
+    def inject_and_report(self, theme:str, data_injected:dict[str,str]):
+        """
+        Al所包装的注入数据说话函数，省去了说话者名字
+        :param theme: 主题
+        :param data_injected: 需注入的键值对
+        :return: 无
+        """
+        voices.inject_and_report(self.short_name,theme,data_injected)
+
     def print_description(self):
         """
         打印Al的描述，用于装备选择界面
@@ -1414,13 +1423,9 @@ class Al29(Al_general):#酒师
         self.report("建立治疗塔")
 
     def operate_in_morning(self):
-        if self.state != []:
+        if self.state:
 
-            while True:
-                try:
-                    self.state.remove(0)
-                except:
-                    break
+            self.state = [x for x in self.state if x != 0]
                 
             my_ship.heal(
                 len(self.state)
@@ -1430,11 +1435,7 @@ class Al29(Al_general):#酒师
             
             Txt.print_plus(f"[酒师]工作中|救治{len(self.state)}次")
 
-            while True:
-                try:
-                    self.state.remove(0)
-                except:
-                    break
+            self.state = [x for x in self.state if x != 0]
 
     def print_self(self):
         if self.is_on_my_ship:
@@ -1443,7 +1444,7 @@ class Al29(Al_general):#酒师
             print()
 
     def suggest(self):
-        if self.state == []:
+        if not self.state:
             return "[2/w]建立治疗塔"
         else:
             return f"[2/w]建立治疗塔|工作中|预计维持{max(self.state)}天|总治疗量{sum(self.state)}层" 
