@@ -254,9 +254,9 @@ class EnemyShip:
         if num > 0:
             voices.report("战场播报", "敌上弹", False)
 
-    def initialize(self):
-        self.missile = 2
-        self.shelter = 2
+    def initialize(self,adj_shelter,adj_missile):
+        self.missile = 2 + adj_missile
+        self.shelter = 2 + adj_shelter
 
     def react(self):
         if self.shelter < 1:  # 如果护盾已被削弱
@@ -336,7 +336,12 @@ class Al_manager:
         my_ship.update_platform()
         my_ship.update_total_al_rank()
 
-    def get_total_al_rank(self):
+    @staticmethod
+    def get_total_al_rank() -> int:
+        """
+        计算我方舰船上终焉结的总等级
+        :return: 总等级
+        """
         out = 0
         for al in my_ship.al_list:
             try:
@@ -1791,11 +1796,29 @@ class MainLoops:
             return 1
         return 0
 
+    @staticmethod
+    def get_adjusting_shelter_and_missile() -> tuple[int,int]:
+        """
+        基于SBMM理念对敌方护盾和导弹进行增强
+        :return: 一个元组，包含敌方护盾、导弹的修正值
+        """
+        total = al_manager.get_total_al_rank() // 3
+        shelter = random.randint(1,total)
+        return shelter, total - shelter
+
+
     def initialize_before_fight(self):
+        # 舰船初始化
         my_ship.initialize()
-        enemy.initialize()
+        shelter, missile = self.get_adjusting_shelter_and_missile()
+        enemy.initialize(shelter,missile)
+
+        # 骰子初始化
         dice.set_probability(0.8)
+        dice.set_di(0.3)
+        # 自动驾驶初始化
         auto_pilot.refresh()
+        # 词条管理器初始化
         entry_manager.set_mode(Modes.FIGHT)
         entry_manager.clear_all_flow()
         self.days = 1
