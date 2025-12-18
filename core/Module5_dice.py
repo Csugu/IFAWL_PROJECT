@@ -17,6 +17,14 @@ class Dice:
         """
         self.probability_current = val
 
+    def set_di(self,val:float):
+        """
+        设置当前的概率波动值
+        :param val: 概率波动取值
+        :return: 无
+        """
+        self.di = val
+
     def decide_who(self,force_advance:Literal[-1,0,1]=0) -> Literal[0,1]:
         """
         决定谁来进行下一回合，并进行马尔科夫链变化

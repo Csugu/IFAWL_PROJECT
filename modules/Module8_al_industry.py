@@ -3,7 +3,9 @@ import random
 from core.Module1_txt import print_plus,Tree,adjust,n_column_print
 from core.Module2_json_loader import json_loader
 
-random.seed("IFAWL_RECIPE_V0")
+recipe_random = random.Random()
+
+recipe_random.seed("IFAWL_RECIPE_V0")
 
 ALL_MATERIALS:list[str] = list(
     json_loader.load("storage_template")["materials"].keys()
@@ -36,9 +38,9 @@ class Tools:
             return {}
         out = {}
         key = str(rank*1100)
-        skeleton = random.choice(AL_RECIPE_SKELETON[key])
+        skeleton = recipe_random.choice(AL_RECIPE_SKELETON[key])
         material_pool = ALL_MATERIALS.copy()
-        random.shuffle(material_pool)
+        recipe_random.shuffle(material_pool)
         for i in range(len(material_pool)):
             if skeleton[i]==0:
                 continue
