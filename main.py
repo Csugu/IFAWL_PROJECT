@@ -1621,21 +1621,21 @@ al34=Al34(34)
 
 class Al39(Al_general): # 黎明维多利亚
     """
-    黎明维多利亚的state转移过程是：0 2 4 6->7 5 3 1->0
+    黎明维多利亚的state转移过程是：0 2 4 6 8 10->11 9 7 5 3 1->0
     """
 
     def add_num(self, num: int):
         if self.state % 2 == 1:
             return num
         self.state += num * 2
-        if self.state > 6:
-            self.state = 6
+        if self.state > 10:
+            self.state = 10
         self.report("建造中")
         return num
 
     def operate_in_afternoon(self):
-        if self.state == 6 or self.state > 7:
-            self.state = 7
+        if self.state == 10 or self.state > 11:
+            self.state = 11
             self.report("准备好")
         if self.state == 1 or self.state < 0:
             self.state = 0
