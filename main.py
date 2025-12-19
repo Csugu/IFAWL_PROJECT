@@ -1662,7 +1662,7 @@ class Al35(Al_general):#青鹄
                 if type(al_temp.state)==int and al_temp.state<0:
                     al_temp.state=0
                     self.report_plus(inp,1)
-                    Txt.print_plus(self.short_name,f"[{al_temp.type}] {al_temp.short_name}#{al_temp.index}冷却已重置")
+                    Txt.print_plus(f"[{al_temp.type}] {al_temp.short_name}#{al_temp.index}冷却已重置")
                 else:
                     self.report_plus(inp,0)
                     al_temp.react()
