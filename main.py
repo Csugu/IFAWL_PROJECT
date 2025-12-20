@@ -14,6 +14,7 @@ from modules.Module6_market_manager import Contract_manager, Contract,tools
 from modules.Module7_auto_pilot import auto_pilot
 from modules.Module8_al_industry import recipe_for_all_al
 from modules.Module9_entry_manager import entry_manager
+from core.Module10_sound_manager import sounds_manager
 
 __VERSION__ = "IFAWL 1.0.0 'STARS OFFSHORE'"
 
@@ -95,6 +96,11 @@ class MyShip:
         :param type: 伤害种类
         :return: 经过加成减弱后的atk
         """
+        match type:
+            case DamageType.MISSILE_LAUNCH:
+                sounds_manager.play_sfx("missile_launch")
+            case _:
+                pass
         for al in self.al_list:
             try:
                 atk = al.add_atk(atk, type)
@@ -228,8 +234,10 @@ class EnemyShip:
             voices.report("护盾", "未受伤")
         elif atk <= 1:
             voices.report("护盾", "受击")
+            sounds_manager.play_sfx("shelter_damaged")
         else:
             voices.report("护盾", "受重击")
+            sounds_manager.play_sfx("shelter_damaged")
 
     def heal(self, hp: int):
         """
@@ -1662,7 +1670,7 @@ class Al35(Al_general):#青鹄
                 if type(al_temp.state)==int and al_temp.state<0:
                     al_temp.state=0
                     self.report_plus(inp,1)
-                    Txt.print_plus(self.short_name,f"[{al_temp.type}] {al_temp.short_name}#{al_temp.index}冷却已重置")
+                    Txt.print_plus(f"[{al_temp.type}] {al_temp.short_name}#{al_temp.index}冷却已重置")
                 else:
                     self.report_plus(inp,0)
                     al_temp.react()
@@ -2028,6 +2036,7 @@ class MainLoops:
 
     @staticmethod
     def station_mainloop():
+        sounds_manager.switch_to_bgm("station")
         while 1:
             station_trees_manager.inject_all()
             Txt.n_column_print(station_trees_manager.generate_all_line_list(), 50)
@@ -2054,6 +2063,7 @@ class MainLoops:
                     main_loops.entry_choosing_mainloop()
                 case _:
                     pass
+        sounds_manager.stop_bgm()
 
     @staticmethod
     def contract_market_mainloop():
