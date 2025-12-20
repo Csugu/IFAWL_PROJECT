@@ -1,6 +1,7 @@
 from __future__ import annotations
 import time
 from typing import Literal
+from core.Module10_sound_manager import sounds_manager
 
 def get_shell_len(txt: str) -> int:
     """
@@ -63,7 +64,9 @@ def input_plus(txt:str,sec:float=0.3):
         time.sleep(sec/length)
     if not txt.endswith(">>>"):
         print(">>>",end="")
-    return input("")
+    inp = input("")
+    sounds_manager.play_sfx("click.wav")
+    return inp
 
 class Tree:#打印用tree对象
 

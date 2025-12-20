@@ -14,7 +14,7 @@ from modules.Module6_market_manager import Contract_manager, Contract,tools
 from modules.Module7_auto_pilot import auto_pilot
 from modules.Module8_al_industry import recipe_for_all_al
 from modules.Module9_entry_manager import entry_manager
-from modules.Module10_sound_manager import sounds_manager
+from core.Module10_sound_manager import sounds_manager
 
 __VERSION__ = "IFAWL 1.0.0 'STARS OFFSHORE'"
 
@@ -2030,6 +2030,7 @@ class MainLoops:
     @staticmethod
     def station_mainloop():
         while 1:
+            sounds_manager.play_sfx("into_station.mp3")
             station_trees_manager.inject_all()
             Txt.n_column_print(station_trees_manager.generate_all_line_list(), 50)
             go_to = input(">>>")
@@ -2150,7 +2151,7 @@ def hello():
 if __name__ == "__main__":
     hello()
     storage_manager.login()
-    sounds_manager.play_async("02_战斗-高难_管弦.wav")
+    #sounds_manager.switch_to_bgm("02_战斗-高难_管弦.wav")
     my_ship.load_al()
     entry_manager.set_all_rank(storage_manager.get_entry_rank())
     while 1:
