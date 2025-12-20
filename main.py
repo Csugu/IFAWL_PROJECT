@@ -234,8 +234,10 @@ class EnemyShip:
             voices.report("护盾", "未受伤")
         elif atk <= 1:
             voices.report("护盾", "受击")
+            sounds_manager.play_sfx("shelter_damaged")
         else:
             voices.report("护盾", "受重击")
+            sounds_manager.play_sfx("shelter_damaged")
 
     def heal(self, hp: int):
         """
