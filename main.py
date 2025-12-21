@@ -99,6 +99,8 @@ class MyShip:
         match type:
             case DamageType.MISSILE_LAUNCH:
                 sounds_manager.play_sfx("missile_launch")
+            case DamageType.PARTICLE_CANNON_SHOOTING:
+                sounds_manager.play_sfx("particle_cannon_shooting")
             case _:
                 pass
         for al in self.al_list:
@@ -2030,8 +2032,10 @@ class MainLoops:
         sounds_manager.stop_bgm()
         if result == 1:
             Txt.print_plus("我方胜利")
+            sounds_manager.switch_to_bgm("win")
             storage_manager.drop_for_fight()
             input_plus("[enter]回站")
+            sounds_manager.stop_bgm()
             return
         Txt.print_plus("敌方胜利")
         if storage_manager.has_enough_ssd(my_ship.total_al_rank):
