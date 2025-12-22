@@ -170,7 +170,14 @@ class MyShip:
                 self.load(1)
                 voices.report(self.platform, "上弹")
             case "1":
-                result =  self.attack(1, DamageType.MISSILE_LAUNCH)
+                match self.platform:
+                    case "导弹":
+                        atk_type = DamageType.MISSILE_LAUNCH
+                    case "粒子炮":
+                        atk_type = DamageType.PARTICLE_CANNON_SHOOTING
+                    case _:
+                        atk_type = DamageType.MISSILE_LAUNCH
+                result =  self.attack(1, atk_type)
                 self.load(-1)
                 if result > 0:
                     voices.report(self.platform, "发射")
@@ -2047,6 +2054,76 @@ class MainLoops:
         input_plus("[enter]回站")
         return
 
+    def disaster_mainloop(self):
+        sounds_manager.switch_to_bgm("fight")
+        while 1:
+            # dawn
+            who = dice.decide_who(force_advance=self.get_force_advance())
+            time.sleep(0.4)
+            for al in my_ship.al_list:
+                if al:
+                    al.operate_in_morning()
+
+            # morning
+            field_printer.print_basic_info(self.days)
+            #entry_manager.print_all_flow_rank() # TODO 写一个适当的函数展示选择的词条难度
+            field_printer.print_for_fight(my_ship, enemy)
+            field_printer.generate_suggestion_tree().print_self()
+            field_printer.print_key_prompt()
+
+            # noon
+            if who == 1:
+                Txt.print_plus("今天由我方行动")
+                my_ship.react()
+            else:
+                Txt.print_plus("今天由敌方行动")
+                enemy.react()
+
+            # afternoon
+            for al in my_ship.al_list:
+                if al:
+                    al.operate_in_afternoon()
+                    if who == 1:
+                        al.operate_in_our_turn()
+
+            # dusk
+            if (result := self.is_over()) != 0:
+                break
+            self.days += 1
+        sounds_manager.stop_bgm()
+        if result == 1:
+            Txt.print_plus("我方胜利")
+            sounds_manager.switch_to_bgm("win")
+            storage_manager.drop_for_fight()
+            input_plus("[enter]回站")
+            sounds_manager.stop_bgm()
+            return
+        Txt.print_plus("敌方胜利")
+        if storage_manager.has_enough_ssd(my_ship.total_al_rank):
+            storage_manager.cost_ssd(my_ship.total_al_rank)
+            input_plus("[enter]回站")
+            return
+        storage_manager.destroy_al(my_ship.al_list)
+        al_manager.clear_al()
+        input_plus("[enter]回站")
+        return
+
+    def initialize_before_disaster(self):
+        # 舰船初始化
+        my_ship.initialize()
+        shelter, missile = self.get_adjusting_shelter_and_missile()
+        enemy.initialize(shelter,missile)
+        # 骰子初始化
+        dice.set_probability(0.8)
+        dice.set_di(0.3)
+        # 自动驾驶初始化
+        auto_pilot.refresh()
+        # 词条管理器初始化
+        entry_manager.set_mode(Modes.DISASTER)
+        entry_manager.clear_all_flow()
+        # 设置天数
+        self.days = 1
+
     @staticmethod
     def station_mainloop():
         sounds_manager.switch_to_bgm("station")
@@ -2164,6 +2241,11 @@ class MainLoops:
                 Txt.print_plus("请输入有效的词条等级")
         storage_manager.save_entry_rank(entry_manager.get_all_rank())
 
+    @staticmethod
+    def ask_destination() -> str:
+        des = Txt.ask_plus("请输入目的地|[0]基本对战|[1]战死之地",["0","1"])
+        return des
+
 main_loops = MainLoops()
 
 def hello():
@@ -2178,6 +2260,13 @@ if __name__ == "__main__":
     entry_manager.set_all_rank(storage_manager.get_entry_rank())
     while 1:
         main_loops.station_mainloop()
-
-        main_loops.initialize_before_fight()
-        main_loops.fight_mainloop()
+        des = main_loops.ask_destination()
+        match des:
+            case "0":
+                main_loops.initialize_before_fight()
+                main_loops.fight_mainloop()
+            case "1":
+                main_loops.initialize_before_disaster()
+                main_loops.disaster_mainloop()
+            case _:
+                pass

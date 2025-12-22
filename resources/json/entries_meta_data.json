@@ -10,7 +10,8 @@
 		],
 		"summary": "概率提升敌方攻击的伤害",
 		"reaction": "敌方伤害 +1",
-		"type": "q"
+		"type": "q",
+		"can_flow": true
 	},
 	"2": {
 		"title": "迷雾",
@@ -22,7 +23,8 @@
 		],
 		"summary": "部分战场信息将不可见",
 		"reaction": "",
-		"type": "e"
+		"type": "e",
+		"can_flow": true
 	},
 	"3": {
 		"title": "虚弱",
@@ -34,7 +36,8 @@
 		],
 		"summary": "概率削弱我方攻击的伤害",
 		"reaction": "我方伤害 -1",
-		"type": "w"
+		"type": "w",
+		"can_flow": true
 	},
 	"6": {
 		"title": "灯塔已灭",
@@ -46,6 +49,7 @@
 		],
 		"summary": "概率削弱我方的回盾量",
 		"reaction": "护盾回充量 -1",
-		"type": "q"
+		"type": "q",
+		"can_flow": true
 	}
 }

@@ -25,6 +25,7 @@ class Entry:
         self.description_list:list[str] = self.metadata["description_txt"]
         self.summary:str                = self.metadata["summary"]
         self.reaction:str               = self.metadata["reaction"]
+        self.can_flow:bool              = self.metadata["can_flow"]
 
         # 通用查表字段
         self.RANK_STR_LIST = ["","I","II","III","IV","V"]
@@ -60,9 +61,9 @@ class Entry:
     def is_not_full(self) -> bool:
         """
         检查自己的flow_rank是否满级
-        :return: True代表未满级（可升级）
+        :return: True代表未满级（可升级）。若词条元数据写明"can_flow": false，则必然返回False
         """
-        return self.flow_rank < self.max_rank
+        return self.flow_rank < self.max_rank and self.can_flow
 
 class EntryManager:
 
