@@ -109,6 +109,7 @@ class MyShip:
             except AttributeError:
                 pass
         atk = entry_manager.check_and_reduce_atk(atk)
+        atk = entry_manager.check_and_attack_me(atk)
         enemy.shelter -= atk
         return atk
 
@@ -124,6 +125,7 @@ class MyShip:
             except AttributeError:
                 pass
         hp = entry_manager.check_and_reduce_hp(hp)
+        hp = entry_manager.check_and_add_enemy_hp(hp,enemy)
         self.shelter += hp
         if hp > 0:
             sounds_manager.play_sfx("shelter_heal")
@@ -2094,6 +2096,7 @@ class MainLoops:
 
             # dusk
             if entry_manager.get_rank_of("5") != 0 and my_ship.shelter <= 0:
+                entry_manager.all_entries["5"].print_when_react()
                 result = -1
                 break
             if (result := self.is_over()) != 0:
@@ -2130,6 +2133,10 @@ class MainLoops:
         # 词条管理器初始化
         entry_manager.set_mode(Modes.DISASTER)
         entry_manager.clear_all_flow()
+        # 词条触发
+        if (rank := entry_manager.get_rank_of("7")) != 0:
+            enemy.shelter += rank * 3
+            entry_manager.all_entries["7"].print_when_react()
         # 设置天数
         self.days = 1
 
@@ -2243,7 +2250,10 @@ class MainLoops:
                 inp_rank = Txt.input_plus("请输入词条难度等级")
                 print()
                 entry.set_rank(int(inp_rank))
-                Txt.print_plus(f"[{entry.index}]{entry.title}{entry.RANK_STR_LIST[entry.selected_rank]} 已激活")
+                if inp_rank == "0":
+                    Txt.print_plus("词条已取消")
+                else:
+                    Txt.print_plus(f"[{entry.index}]{entry.title}{entry.RANK_STR_LIST[entry.selected_rank]} 已激活")
             except KeyError:
                 Txt.print_plus("请输入有效的词条编号")
             except ValueError:

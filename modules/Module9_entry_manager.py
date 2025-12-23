@@ -163,12 +163,14 @@ class EntryManager:
     # 战斗方法
 
     def check_and_add_atk(self,atk) -> int:
+        """烈风"""
         if dice.probability(self.get_rank_of("1")*0.2):
             atk += 1
             self.all_entries["1"].print_when_react()
         return atk
 
     def check_and_reduce_atk(self,atk) -> int:
+        """虚弱"""
         if self.get_rank_of("3") == 1 and atk > 1 and dice.probability(0.3):
             atk -= 1
             self.all_entries["3"].print_when_react()
@@ -178,9 +180,23 @@ class EntryManager:
         return atk
 
     def check_and_reduce_hp(self,hp:int):
+        """灯塔已灭"""
         if dice.probability(self.get_rank_of("6")*0.2):
             hp -= 1
             self.all_entries["6"].print_when_react()
         return hp
+
+    def check_and_add_enemy_hp(self,hp:int,enemy):
+        """滋生"""
+        if dice.probability(self.get_rank_of("8")*0.2):
+            self.all_entries["8"].print_when_react()
+            enemy.heal(1)
+        return hp
+
+    def check_and_attack_me(self,atk:int,enemy):
+        """极限爆发"""
+        if atk >= enemy.shelter:
+            enemy.attack(self.get_rank_of("9"))
+        return atk
 
 entry_manager = EntryManager()
