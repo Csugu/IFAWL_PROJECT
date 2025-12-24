@@ -7,6 +7,7 @@ class Dice:
     def __init__(self):
         self.probability_current = 0.8
         self.di = 0.3
+        self.additional_di = 0
         self.current_who:Literal[0,1] = 0
 
     def set_probability(self,val:float):
@@ -24,6 +25,14 @@ class Dice:
         :return: 无
         """
         self.di = val
+
+    def set_additional_di(self,val:float):
+        """
+        设置当前的敌方行动概率追加值
+        :param val: 概率波动取值
+        :return: 无
+        """
+        self.additional_di = val
 
     def decide_who(self,force_advance:Literal[-1,0,1]=0) -> Literal[0,1]:
         """
@@ -46,6 +55,7 @@ class Dice:
 
         if self.current_who == 1:
             self.probability_current -= self.di
+            self.probability_current -= self.additional_di
         else:
             self.probability_current += self.di 
 

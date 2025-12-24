@@ -273,6 +273,7 @@ class EnemyShip:
         :param num: 原始上弹量
         :return: 无
         """
+        num = entry_manager.check_and_add_num(num)
         self.missile += num
         if num > 0:
             voices.report("战场播报", "敌上弹", False)
@@ -1923,7 +1924,7 @@ class StationTreesManager:
                 else "[No Info]"
         })
         self.all_tree_list["词条信息"].inject({
-            "total_points": entry_manager.get_total_points()
+            "total_points": entry_manager.count_total_points()
         })
         self.all_tree_list["词条信息"].rewrite_lines(
             entry_manager.generate_entry_summary_lines()
@@ -1984,6 +1985,7 @@ class MainLoops:
         # 骰子初始化
         dice.set_probability(0.8)
         dice.set_di(0.3)
+        dice.set_additional_di(0)
         # 自动驾驶初始化
         auto_pilot.refresh()
         # 词条管理器初始化
@@ -2009,6 +2011,8 @@ class MainLoops:
         sounds_manager.switch_to_bgm("fight")
         while 1:
             # dawn
+            if (rank := entry_manager.get_rank_of("11")) != 0:
+                dice.set_additional_di(rank * 0.1)
             who = dice.decide_who(force_advance=self.get_force_advance())
             if self.days >= self.entry_begin_day \
             and (self.days-self.entry_begin_day) % self.entry_delta == 0:
@@ -2128,6 +2132,7 @@ class MainLoops:
         # 骰子初始化
         dice.set_probability(0.8)
         dice.set_di(0.3)
+        dice.set_additional_di(0)
         # 自动驾驶初始化
         auto_pilot.refresh()
         # 词条管理器初始化
@@ -2137,6 +2142,9 @@ class MainLoops:
         if (rank := entry_manager.get_rank_of("7")) != 0:
             enemy.shelter += rank * 3
             entry_manager.all_entries["7"].print_when_react()
+        if (rank := entry_manager.get_rank_of("11")) != 0:
+            dice.set_additional_di(rank * 0.1)
+            entry_manager.all_entries["11"].print_when_react()
         # 设置天数
         self.days = 1
 
@@ -2229,6 +2237,7 @@ class MainLoops:
         while 1:
             print()
             entry_manager.print_all_descriptions()
+            entry_manager.print_chosen_as_tree()
             inp_index = Txt.input_plus("请输入要修改或加入的词条 [0]清空词条 [all]选择所有词条 [enter]退出>>>")
             print()
             match inp_index:

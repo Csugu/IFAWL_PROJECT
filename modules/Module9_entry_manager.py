@@ -82,6 +82,14 @@ class EntryManager:
         for entry in self.all_entries.values():
             entry.print_description()
 
+    def print_chosen_as_tree(self):
+        title = f"当前选择的词条 [总分:{self.count_total_points()}]"
+        body = self.generate_entry_summary_lines()
+        Tree(
+            title,
+            body
+        ).print_self()
+
     def clear_all_selected(self):
         for entry in self.all_entries.values():
             entry.selected_rank = 0
@@ -101,7 +109,7 @@ class EntryManager:
         """
         return {entry_index: entry.selected_rank for entry_index, entry in self.all_entries.items()}
 
-    def get_total_points(self) -> int:
+    def count_total_points(self) -> int:
         """
         计算所有已选择词条的总分
         :return: 总分
@@ -198,5 +206,12 @@ class EntryManager:
         if atk >= enemy.shelter:
             enemy.attack(self.get_rank_of("9"))
         return atk
+
+    def check_and_add_num(self,num:int):
+        """烛燃"""
+        if dice.probability(self.get_rank_of("10")*0.3):
+            num += 1
+            self.all_entries["10"].print_when_react()
+        return num
 
 entry_manager = EntryManager()
