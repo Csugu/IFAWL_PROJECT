@@ -547,22 +547,26 @@ class Al_general:
         if self.rank_num == 0:
             return
         # 基本信息
-        str1 = f"[{self.index}]" + self.len_name + f" [{self.metadata['rank']}]"
-        print((Txt.adjust(str1,45)), end="")
+        line1 = ""
+        str1 = f"[{self.index}]{self.len_name} [{self.metadata['rank']}]"
+        line1 += Txt.adjust(str1,45)
         # 可合成性
         if self.is_craftable:
             craftable_tag = "[可合成●]"
         else:
             craftable_tag = "[不可合成]"
-        print(Txt.adjust(craftable_tag,12), end="")
+        line1 += Txt.adjust(craftable_tag,12)
         # 本终焉结存货
-        print(f"现有 {assets[str(self.index)]} 在仓库")
+        line1 += f"现有 {assets[str(self.index)]} 在仓库"
+        print(line1)
         # 物品存货
-        for item in self.recipe:
-            note = "[▲]" if self.recipe[item] > assets[item] else ""
-            str0 = f"|-{item}x{self.recipe[item]}/{assets[item]}{note}"
-            print(Txt.adjust(str0,22), end="")
-        print()
+        line2 = ""
+        for item,require in self.recipe.items():
+            inventory = assets[item]
+            note = "[▲]" if require > inventory else ""
+            str0 = f"|-{item}x{require}/{inventory}{note}"
+            line2 += Txt.adjust(str0,22)
+        print(line2)
         print()
 
     def craft_self(self):
