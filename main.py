@@ -109,7 +109,7 @@ class MyShip:
             except AttributeError:
                 pass
         atk = entry_manager.check_and_reduce_atk(atk)
-        atk = entry_manager.check_and_attack_me(atk)
+        atk = entry_manager.check_and_attack_me(atk,enemy)
         enemy.shelter -= atk
         return atk
 
