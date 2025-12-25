@@ -16,7 +16,7 @@ from modules.Module8_al_industry import recipe_for_all_al
 from modules.Module9_entry_manager import entry_manager
 from core.Module10_sound_manager import sounds_manager
 
-__VERSION__ = "IFAWL 1.0.0 'STARS OFFSHORE'"
+__VERSION__ = "IFAWL 1.1.0 'DISASTER APPROACHING'"
 
 class DamageType:
     """伤害类型枚举"""
