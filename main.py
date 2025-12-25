@@ -237,6 +237,7 @@ class EnemyShip:
         :return: 无
         """
         atk = entry_manager.check_and_add_atk(atk)
+        atk = entry_manager.check_and_reduce_missile(atk)
         for al in my_ship.al_list:
             try:
                 atk = al.reduce_enemy_attack(atk)
@@ -301,8 +302,9 @@ class EnemyShip:
             case "0":
                 self.load(1)
             case "1":
-                self.attack(1)
-                self.load(-1)
+                num = entry_manager.check_and_get_launch_num(self)
+                self.attack(num)
+                self.load(-num)
             case "2":
                 self.heal(1)
             case _:
@@ -2107,6 +2109,9 @@ class MainLoops:
                         al.operate_in_our_turn()
 
             # dusk
+            if entry_manager.get_rank_of("13") != 0 and self.days > 100 - 20 * entry_manager.get_rank_of("13"):
+                enemy.attack(1)
+                entry_manager.all_entries["13"].print_when_react()
             if entry_manager.get_rank_of("5") != 0 and my_ship.shelter <= 0:
                 entry_manager.all_entries["5"].print_when_react()
                 result = -1

@@ -197,8 +197,8 @@ class EntryManager:
     def check_and_add_enemy_hp(self,hp:int,enemy):
         """滋生"""
         if dice.probability(self.get_rank_of("8")*0.2):
-            self.all_entries["8"].print_when_react()
             enemy.heal(1)
+            self.all_entries["8"].print_when_react()
         return hp
 
     def check_and_attack_me(self,atk:int,enemy):
@@ -212,6 +212,24 @@ class EntryManager:
         if dice.probability(self.get_rank_of("10")*0.3):
             num += 1
             self.all_entries["10"].print_when_react()
+        return num
+
+    def check_and_reduce_missile(self,atk:int,my_ship):
+        """海啸"""
+        if dice.probability(self.get_rank_of("12") * 0.2) and atk > 1:
+            my_ship.load(-1)
+            self.all_entries["12"].print_when_react()
+        return atk
+
+    def check_and_get_launch_num(self,enemy):
+        """烛燃"""
+        if (rank := self.get_rank_of("14")) == 0:
+            num = 1
+        elif enemy.missile > 4 - rank:
+            num = 2
+            self.all_entries["14"].print_when_react()
+        else:
+            num = 1
         return num
 
 entry_manager = EntryManager()
