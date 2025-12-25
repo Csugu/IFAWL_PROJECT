@@ -1933,6 +1933,10 @@ class StationTreesManager:
         self.all_tree_list["词条信息"].rewrite_lines(
             entry_manager.generate_entry_summary_lines()
         )
+        self.all_tree_list["仓库信息"].inject({
+            "material": storage_manager.total_materials_num,
+            "al_num": storage_manager.total_als_num
+        })
 
     def generate_all_line_list(self):
         all_line_list = [[] for _ in range(self.column)]

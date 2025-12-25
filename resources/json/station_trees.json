@@ -54,5 +54,15 @@
 		"col": 1,
 		"row": 2,
 		"can_be_folded": true
+	},
+	"仓库信息": {
+		"title": "仓库存储>正常",
+        "line_list": [
+			"物品仓库>{material}立方米",
+            "终焉结仓库>{al_num}件",
+            "[z]访问仓库"
+		],
+		"col": 1,
+		"row": 3
 	}
 }
