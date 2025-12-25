@@ -109,6 +109,7 @@ class MyShip:
             except AttributeError:
                 pass
         atk = entry_manager.check_and_reduce_atk(atk)
+        atk = entry_manager.check_and_attack_me(atk,enemy)
         enemy.shelter -= atk
         return atk
 
@@ -124,6 +125,7 @@ class MyShip:
             except AttributeError:
                 pass
         hp = entry_manager.check_and_reduce_hp(hp)
+        hp = entry_manager.check_and_add_enemy_hp(hp,enemy)
         self.shelter += hp
         if hp > 0:
             sounds_manager.play_sfx("shelter_heal")
@@ -235,6 +237,7 @@ class EnemyShip:
         :return: 无
         """
         atk = entry_manager.check_and_add_atk(atk)
+        atk = entry_manager.check_and_reduce_missile(atk,my_ship)
         for al in my_ship.al_list:
             try:
                 atk = al.reduce_enemy_attack(atk)
@@ -271,6 +274,7 @@ class EnemyShip:
         :param num: 原始上弹量
         :return: 无
         """
+        num = entry_manager.check_and_add_num(num)
         self.missile += num
         if num > 0:
             voices.report("战场播报", "敌上弹", False)
@@ -298,8 +302,9 @@ class EnemyShip:
             case "0":
                 self.load(1)
             case "1":
-                self.attack(1)
-                self.load(-1)
+                num = entry_manager.check_and_get_launch_num(self)
+                self.attack(num)
+                self.load(-num)
             case "2":
                 self.heal(1)
             case _:
@@ -544,22 +549,26 @@ class Al_general:
         if self.rank_num == 0:
             return
         # 基本信息
-        str1 = f"[{self.index}]" + self.len_name + f" [{self.metadata['rank']}]"
-        print((Txt.adjust(str1,45)), end="")
+        line1 = ""
+        str1 = f"[{self.index}]{self.len_name} [{self.metadata['rank']}]"
+        line1 += Txt.adjust(str1,45)
         # 可合成性
         if self.is_craftable:
             craftable_tag = "[可合成●]"
         else:
             craftable_tag = "[不可合成]"
-        print(Txt.adjust(craftable_tag,12), end="")
+        line1 += Txt.adjust(craftable_tag,12)
         # 本终焉结存货
-        print(f"现有 {assets[str(self.index)]} 在仓库")
+        line1 += f"现有 {assets[str(self.index)]} 在仓库"
+        print(line1)
         # 物品存货
-        for item in self.recipe:
-            note = "[▲]" if self.recipe[item] > assets[item] else ""
-            str0 = f"|-{item}x{self.recipe[item]}/{assets[item]}{note}"
-            print(Txt.adjust(str0,22), end="")
-        print()
+        line2 = ""
+        for item,require in self.recipe.items():
+            inventory = assets[item]
+            note = "[▲]" if require > inventory else ""
+            str0 = f"|-{item}x{require}/{inventory}{note}"
+            line2 += Txt.adjust(str0,22)
+        print(line2)
         print()
 
     def craft_self(self):
@@ -1920,6 +1929,16 @@ class StationTreesManager:
                 if my_ship.al_list[2] \
                 else "[No Info]"
         })
+        self.all_tree_list["词条信息"].inject({
+            "total_points": entry_manager.count_total_points()
+        })
+        self.all_tree_list["词条信息"].rewrite_lines(
+            entry_manager.generate_entry_summary_lines()
+        )
+        self.all_tree_list["仓库信息"].inject({
+            "material": storage_manager.total_materials_num,
+            "al_num": storage_manager.total_als_num
+        })
 
     def generate_all_line_list(self):
         all_line_list = [[] for _ in range(self.column)]
@@ -1976,6 +1995,7 @@ class MainLoops:
         # 骰子初始化
         dice.set_probability(0.8)
         dice.set_di(0.3)
+        dice.set_additional_di(0)
         # 自动驾驶初始化
         auto_pilot.refresh()
         # 词条管理器初始化
@@ -2001,6 +2021,8 @@ class MainLoops:
         sounds_manager.switch_to_bgm("fight")
         while 1:
             # dawn
+            if (rank := entry_manager.get_rank_of("11")) != 0:
+                dice.set_additional_di(rank * 0.1)
             who = dice.decide_who(force_advance=self.get_force_advance())
             if self.days >= self.entry_begin_day \
             and (self.days-self.entry_begin_day) % self.entry_delta == 0:
@@ -2058,8 +2080,8 @@ class MainLoops:
         sounds_manager.switch_to_bgm("fight")
         while 1:
             # dawn
-            who = dice.decide_who(force_advance=self.get_force_advance())
             time.sleep(0.4)
+            who = dice.decide_who(force_advance=self.get_force_advance())
             for al in my_ship.al_list:
                 if al:
                     al.operate_in_morning()
@@ -2087,6 +2109,13 @@ class MainLoops:
                         al.operate_in_our_turn()
 
             # dusk
+            if entry_manager.get_rank_of("13") != 0 and self.days > 100 - 20 * entry_manager.get_rank_of("13"):
+                enemy.attack(1)
+                entry_manager.all_entries["13"].print_when_react()
+            if entry_manager.get_rank_of("5") != 0 and my_ship.shelter <= 0:
+                entry_manager.all_entries["5"].print_when_react()
+                result = -1
+                break
             if (result := self.is_over()) != 0:
                 break
             self.days += 1
@@ -2116,11 +2145,19 @@ class MainLoops:
         # 骰子初始化
         dice.set_probability(0.8)
         dice.set_di(0.3)
+        dice.set_additional_di(0)
         # 自动驾驶初始化
         auto_pilot.refresh()
         # 词条管理器初始化
         entry_manager.set_mode(Modes.DISASTER)
         entry_manager.clear_all_flow()
+        # 词条触发
+        if (rank := entry_manager.get_rank_of("7")) != 0:
+            enemy.shelter += rank * 3
+            entry_manager.all_entries["7"].print_when_react()
+        if (rank := entry_manager.get_rank_of("11")) != 0:
+            dice.set_additional_di(rank * 0.1)
+            entry_manager.all_entries["11"].print_when_react()
         # 设置天数
         self.days = 1
 
@@ -2213,6 +2250,7 @@ class MainLoops:
         while 1:
             print()
             entry_manager.print_all_descriptions()
+            entry_manager.print_chosen_as_tree()
             inp_index = Txt.input_plus("请输入要修改或加入的词条 [0]清空词条 [all]选择所有词条 [enter]退出>>>")
             print()
             match inp_index:
@@ -2234,7 +2272,10 @@ class MainLoops:
                 inp_rank = Txt.input_plus("请输入词条难度等级")
                 print()
                 entry.set_rank(int(inp_rank))
-                Txt.print_plus(f"[{entry.index}]{entry.title}{entry.RANK_STR_LIST[entry.selected_rank]} 已激活")
+                if inp_rank == "0":
+                    Txt.print_plus("词条已取消")
+                else:
+                    Txt.print_plus(f"[{entry.index}]{entry.title}{entry.RANK_STR_LIST[entry.selected_rank]} 已激活")
             except KeyError:
                 Txt.print_plus("请输入有效的词条编号")
             except ValueError:

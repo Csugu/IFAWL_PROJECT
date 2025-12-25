@@ -82,6 +82,14 @@ class EntryManager:
         for entry in self.all_entries.values():
             entry.print_description()
 
+    def print_chosen_as_tree(self):
+        title = f"当前选择的词条 [总分:{self.count_total_points()}]"
+        body = self.generate_entry_summary_lines()
+        Tree(
+            title,
+            body
+        ).print_self()
+
     def clear_all_selected(self):
         for entry in self.all_entries.values():
             entry.selected_rank = 0
@@ -95,7 +103,28 @@ class EntryManager:
             self.all_entries[entry_index].selected_rank = rank
 
     def get_all_rank(self) -> dict[str,int]:
+        """
+        取得所有词条的静态等级字典
+        :return: 一个字典，键为词条的字符串编号，值为其等级
+        """
         return {entry_index: entry.selected_rank for entry_index, entry in self.all_entries.items()}
+
+    def count_total_points(self) -> int:
+        """
+        计算所有已选择词条的总分
+        :return: 总分
+        """
+        out = 0
+        for entry in self.all_entries.values():
+            out += entry.points_list[entry.selected_rank]
+        return out
+
+    def generate_entry_summary_lines(self):
+        out = []
+        for entry in self.all_entries.values():
+            if entry.selected_rank != 0:
+                out.append(f"[{entry.index}]{entry.title}{entry.RANK_STR_LIST[entry.selected_rank]}:{entry.description_list[entry.selected_rank]}[{entry.points_list[entry.selected_rank]}分]")
+        return out
 
     # 级别检索
 
@@ -142,12 +171,14 @@ class EntryManager:
     # 战斗方法
 
     def check_and_add_atk(self,atk) -> int:
+        """烈风"""
         if dice.probability(self.get_rank_of("1")*0.2):
             atk += 1
             self.all_entries["1"].print_when_react()
         return atk
 
     def check_and_reduce_atk(self,atk) -> int:
+        """虚弱"""
         if self.get_rank_of("3") == 1 and atk > 1 and dice.probability(0.3):
             atk -= 1
             self.all_entries["3"].print_when_react()
@@ -157,9 +188,48 @@ class EntryManager:
         return atk
 
     def check_and_reduce_hp(self,hp:int):
+        """灯塔已灭"""
         if dice.probability(self.get_rank_of("6")*0.2):
             hp -= 1
             self.all_entries["6"].print_when_react()
         return hp
+
+    def check_and_add_enemy_hp(self,hp:int,enemy):
+        """滋生"""
+        if dice.probability(self.get_rank_of("8")*0.2):
+            enemy.heal(1)
+            self.all_entries["8"].print_when_react()
+        return hp
+
+    def check_and_attack_me(self,atk:int,enemy):
+        """极限爆发"""
+        if atk >= enemy.shelter:
+            enemy.attack(self.get_rank_of("9"))
+        return atk
+
+    def check_and_add_num(self,num:int):
+        """烛燃"""
+        if dice.probability(self.get_rank_of("10")*0.3):
+            num += 1
+            self.all_entries["10"].print_when_react()
+        return num
+
+    def check_and_reduce_missile(self,atk:int,my_ship):
+        """海啸"""
+        if dice.probability(self.get_rank_of("12") * 0.2) and atk > 1:
+            my_ship.load(-1)
+            self.all_entries["12"].print_when_react()
+        return atk
+
+    def check_and_get_launch_num(self,enemy):
+        """狂怒"""
+        if (rank := self.get_rank_of("14")) == 0:
+            num = 1
+        elif enemy.missile > 4 - rank:
+            num = 2
+            self.all_entries["14"].print_when_react()
+        else:
+            num = 1
+        return num
 
 entry_manager = EntryManager()

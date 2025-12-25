@@ -39,6 +39,18 @@
 		"type": "w",
 		"can_flow": true
 	},
+	"5": {
+		"title": "最终防线",
+		"points": [0,50],
+		"description_txt": [
+			"",
+			"护盾被清空则失败"
+		],
+		"summary": "护盾被清空则失败",
+		"reaction": "我方护盾被清空>>舰船受损不可逆",
+		"type": "e",
+		"can_flow": false
+	},
 	"6": {
 		"title": "灯塔已灭",
 		"points": [0,30,50],
@@ -50,6 +62,110 @@
 		"summary": "概率削弱我方的回盾量",
 		"reaction": "护盾回充量 -1",
 		"type": "q",
+		"can_flow": true
+	},
+	"7": {
+		"title": "铁城",
+		"points": [0, 60, 100],
+		"description_txt": [
+			"",
+			"敌方初始护盾+3",
+			"敌方初始护盾+6"
+		],
+		"summary": "增加敌方初始护盾量",
+		"reaction": "敌方初始护盾增加",
+		"type": "w",
+		"can_flow": false
+	},
+	"8": {
+		"title": "滋生",
+		"points": [0, 30, 50],
+		"description_txt": [
+			"",
+			"我方回盾时有20%概率使敌方护盾+1",
+			"我方回盾时有40%概率使敌方护盾+1"
+		],
+		"summary": "在我方上盾时，概率使敌方护盾增加",
+		"reaction": "敌方护盾 +1",
+		"type": "w",
+		"can_flow": true
+	},
+	"9": {
+		"title": "极限爆发",
+		"points": [0, 30, 60],
+		"description_txt": [
+			"",
+			"敌方最后一层护盾被攻破时，对我方造成1伤害",
+			"敌方最后一层护盾被攻破时，对我方造成2伤害"
+		],
+		"summary": "敌方最后一层护盾被攻破时，对我方造成伤害",
+		"reaction": "护盾受损",
+		"type": "q",
+		"can_flow": true
+	},
+	"10": {
+		"title": "烛燃",
+		"points": [0, 40, 80],
+		"description_txt": [
+			"",
+			"敌方上弹时有30%概率额外装填一枚",
+			"敌方上弹时有60%概率额外装填一枚"
+		],
+		"summary": "敌方上弹时有概率额外装填一枚",
+		"reaction": "敌方导弹 ++1",
+		"type": "q",
+		"can_flow": true
+	},
+	"11": {
+		"title": "反冲锋",
+		"points": [0, 30, 60],
+		"description_txt": [
+			"",
+			"使敌方行动概率增加7.1%(敌:我=57.1:42.9)",
+			"使敌方行动概率增加12.5%(敌:我=62.5:37.5)"
+		],
+		"summary": "使敌方行动概率增加",
+		"reaction": "",
+		"type": "e",
+		"can_flow": true
+	},
+	"12": {
+		"title": "海啸",
+		"points": [0, 30, 60],
+		"description_txt": [
+			"",
+			"大于一的敌方攻击有20%拆除我方导弹",
+			"大于一的敌方攻击有40%拆除我方导弹"
+		],
+		"summary": "敌方攻击将拆除我方导弹",
+		"reaction": "导弹被拆除",
+		"type": "r",
+		"can_flow": true
+	},
+	"13": {
+		"title": "压境",
+		"points": [0, 40, 70],
+		"description_txt": [
+			"",
+			"天数大于80时每天造成1伤害",
+			"天数大于60时每天造成1伤害"
+		],
+		"summary": "战斗将拥有时间限制",
+		"reaction": "护盾受损",
+		"type": "p",
+		"can_flow": false
+	},
+	"14": {
+		"title": "狂怒",
+		"points": [0, 40, 70],
+		"description_txt": [
+			"",
+			"敌方导弹大于3时连续发射两枚导弹",
+			"敌方导弹大于2时连续发射两枚导弹"
+		],
+		"summary": "敌方导弹充足时可以连续发射导弹",
+		"reaction": "连续发射导弹",
+		"type": "r",
 		"can_flow": true
 	}
 }
