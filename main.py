@@ -326,9 +326,15 @@ class Al_manager:
             self.choose_al("w")
             self.choose_al("e")
             return
-        for key,al in self.all_al_list.items():
-            if al.type == type_choosing and storage_manager.get_value_of(key) > 0:
-                al.print_description()
+#        for key,al in self.all_al_list.items():
+#            if al.type == type_choosing:
+#                al.print_description()
+        # 打印Al的描述
+        al_list = [al for al in self.all_al_list.values() if al.type == type_choosing]
+        al_list.sort(key=lambda al: al.rank_num)
+        for al in al_list:
+            al.print_description()
+        # Al的选择
         cn_type = {"q": "主武器", "w": "生存位", "e": "战术装备"}[type_choosing]
         al_position = {"q": 0, "w": 1, "e": 2}[type_choosing]
         while 1:
