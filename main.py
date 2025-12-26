@@ -340,7 +340,7 @@ class Al_manager:
         al_position = {"q": 0, "w": 1, "e": 2}[type_choosing]
         while 1:
             inp = Txt.input_plus(
-                f"\n指挥官，请输入数字选择本场战斗的{cn_type}（对局中输入{type_choosing}来使用）[-1=不使用{cn_type}]>>>")
+                f"\n指挥官，请输入数字选择本场战斗的{cn_type}|[-1] 不使用{cn_type}|[enter] 保留原有选择>>>")
             if inp not in self.al_meta_data or self.al_meta_data[inp]["type"] != type_choosing:
                 if inp == "":
                     break
@@ -1873,7 +1873,7 @@ class FieldPrinter:
             me.al_list[0].print_self_before_shelter()
         except AttributeError:
             pass
-        damage_previewer.print_my_ship_dmg(me.shelter)
+        damage_previewer.print_my_ship_dmg(me.shelter,mute=(al14.state!=0))
         me.print_self_shelter(entry_manager.get_rank_of("2")>=2)
         try:
             me.al_list[1].print_self_behind_shelter()
@@ -2361,7 +2361,7 @@ class MainLoops:
 
     @staticmethod
     def ask_destination() -> str:
-        des = Txt.ask_plus("请输入目的地|[0]基本对战|[1]战死之地",["0","1"])
+        des = Txt.ask_plus("请输入目的地|[0] 基本对战|[1] 战死之地| [enter]回站",["0","1"])
         return des
 
 main_loops = MainLoops()
