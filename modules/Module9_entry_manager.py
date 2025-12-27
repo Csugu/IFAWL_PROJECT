@@ -221,6 +221,8 @@ class EntryManager:
 
     def check_and_add_num(self,num:int):
         """烛燃"""
+        if num < 0:
+            return num
         if dice.probability(self.get_rank_of("10")*0.3):
             num += 1
             self.all_entries["10"].print_when_react()
