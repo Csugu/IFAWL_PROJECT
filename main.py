@@ -1260,7 +1260,7 @@ class Al24(Al_general):
     def reduce_enemy_attack(self, atk):
         if self.state == 0:
             return atk
-        if dice.probability(0.99):
+        if dice.probability(1):
             self.state -= self.find_the_quotient_rounded_up(atk, 2)
             atk = 0
             my_ship.missile += 1
