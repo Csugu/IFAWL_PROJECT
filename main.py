@@ -1531,7 +1531,7 @@ class Al30(Al_general):
             # p_c_manager.boom_now()
 
     def add_atk(self, atk: int, type: str) -> int:
-        if self.state < 0 and dice.probability(0.8):
+        if self.state < 0 and dice.probability(0.5):
             self.report("增伤")
             return atk + 1
         else:
