@@ -2339,12 +2339,14 @@ class MainLoops:
         sounds_manager.stop_bgm()
         if result == 1:
             Txt.print_plus("我方胜利")
+            damage_previewer.show_total_dmg()
             sounds_manager.switch_to_bgm("win")
             storage_manager.drop_for_fight()
             input_plus("[enter]回站")
             sounds_manager.stop_bgm()
             return
         Txt.print_plus("敌方胜利")
+        damage_previewer.show_total_dmg()
         if storage_manager.has_enough_ssd(my_ship.total_al_rank):
             storage_manager.cost_ssd(my_ship.total_al_rank)
             input_plus("[enter]回站")
@@ -2426,12 +2428,14 @@ class MainLoops:
         sounds_manager.stop_bgm()
         if result == 1:
             Txt.print_plus("我方胜利")
+            damage_previewer.show_total_dmg()
             sounds_manager.switch_to_bgm("win")
             storage_manager.drop_for_fight()
             input_plus("[enter]回站")
             sounds_manager.stop_bgm()
             return
         Txt.print_plus("敌方胜利")
+        damage_previewer.show_total_dmg()
         if storage_manager.has_enough_ssd(my_ship.total_al_rank):
             storage_manager.cost_ssd(my_ship.total_al_rank)
             input_plus("[enter]回站")
