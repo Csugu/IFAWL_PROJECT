@@ -1548,7 +1548,7 @@ class Al29(Al_general): # 酒师
 
 al29=Al29(29)
 
-class Al30(Al_general):
+class Al30(Al_general): # 湾区铃兰
 
     def react(self):
         if self.state == 0:
@@ -2024,6 +2024,7 @@ class Al40(Al_general): # 冷水
     def react(self):
         if my_ship.shelter < 1:
             self.report("护盾不足")
+            my_ship.heal(1)
             return
         my_ship.shelter -= 1
         self.state += 1
@@ -2044,6 +2045,12 @@ class Al40(Al_general): # 冷水
                 atk = 0
                 self.report("承受")
         return atk
+
+    def suggest(self):
+        if my_ship.shelter == 0:
+            return "[护盾不足]不能使用冷水|[2]回充护盾"
+        else:
+            return "[e]充入冷水"
 
 al40 = Al40(40)
 
