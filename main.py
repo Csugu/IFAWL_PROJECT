@@ -173,10 +173,13 @@ class MyShip:
         """
         operation = auto_pilot.get_operation([self.shelter, self.missile, enemy.shelter, enemy.missile, 0])
         #print(operation)
+        for al in my_ship.al_list:
+            try:
+                operation = al.adjust_operation(operation)
+            except AttributeError:
+                pass
         if self.missile < 1 and operation == "1":
             operation = "0"
-        if self.al_list[1] == al18 and operation == "2":
-            operation = "w"
         if self.al_list[1] == al21 and operation == "2":
             al21.heal()
             operation = "pass"
@@ -571,6 +574,9 @@ class Al_general:
 
     def operate_in_our_turn(self):
         pass
+
+    def adjust_operation(self,raw:str) -> str:
+        return raw
 
     def refresh_craftable_tag(self):
         """
@@ -1101,6 +1107,11 @@ al17 = Al17(17)
 
 
 class Al18(Al_general): # 初夏
+
+    def adjust_operation(self,raw:str) -> str:
+        if self.is_on_my_ship() and raw == "2":
+            return "w"
+        return raw
 
     def react(self):
         if dice.probability(0.6) or self.state == 1:
