@@ -363,7 +363,7 @@
     "len_name": "“普罗旺斯”粒子匣能量转换平台",
     "short_name": "普罗旺斯",
     "short_name_en": "Provence",
-    "description_txt": "-\n-\n-",
+    "description_txt": "-由浅草寺重工开发的粒子匣充能平台，实现了粒子炮和护盾能量的通用\n-输入e时，若没有粒子匣或粒子匣数量为偶数，则增加两盒粒子匣\n-若粒子匣数目为奇数，拆除一盒粒子匣并回充两层护盾",
     "index": 32,
     "type": "e",
     "rank": "VII",
