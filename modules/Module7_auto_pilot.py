@@ -76,11 +76,14 @@ class Auto_pilot_manager:#自动驾驶
 
     def react(self, field_state):
 
-        PS=field_state[0]
-        PM=field_state[1]
-        CS=field_state[2]
-        CM=field_state[3]
-        F=field_state[4]
+        ps=field_state[0]
+        pm=field_state[1]
+        cs=field_state[2]
+        cm=field_state[3]
+        f=field_state[4]
+        q=field_state[5]
+        w=field_state[6]
+        e=field_state[7]
 
 
         output=""

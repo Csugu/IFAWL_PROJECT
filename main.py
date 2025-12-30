@@ -169,8 +169,15 @@ class MyShip:
         进行回合中响应
         :return: 无
         """
-        operation = auto_pilot.get_operation([self.shelter, self.missile, enemy.shelter, enemy.missile, 0])
-        #print(operation)
+        #自动驾驶
+        field_printer =  [self.shelter, self.missile, enemy.shelter, enemy.missile, 0]
+        for al in my_ship.al_list:
+            if al != None and type(al.state) == int:
+                field_printer.append(al.state)
+            else:
+                field_printer.append(0)
+        operation = auto_pilot.get_operation(field_printer)
+
         for al in my_ship.al_list:
             try:
                 operation = al.adjust_operation(operation)
