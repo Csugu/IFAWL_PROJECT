@@ -31,6 +31,14 @@ class CardGeneral:
         self.enemy = enemy
         self.entry_manager = entry_manager
 
+    def print_self(self):
+        Tree(
+            "-------------------------->>",
+            f"|协议>{self.title}",
+            f"|{self.description_txt}",
+            f"|---{self.story_txt}"
+        ).print_self()
+
     def react(self):
         ...
 
