@@ -1,7 +1,7 @@
 from typing import Literal
 import random
 
-from core.Module1_txt import print_plus,Tree
+from core.Module1_txt import print_plus, Tree, ask_plus
 from core.Module2_json_loader import json_loader
 
 ALL_CARD_METADATA = json_loader.load("cards_meta_data")
@@ -13,9 +13,16 @@ class CardManager:
         self.enemy = enemy
         self.entry_manager = entry_manager
         self.all_cards:dict[str,CardGeneral] = {
-            index:CardGeneral(index,self.my_ship,self.enemy,self.entry_manager)
+            index:globals()[f"Card{index}"](index,self.my_ship,self.enemy,self.entry_manager)
             for index in ALL_CARD_METADATA
         }
+
+    def choose_card(self):
+        choose_list:list[CardGeneral] = random.sample(list(self.all_cards.values()),k=2)
+        for card in choose_list:
+            card.print_self()
+        result = ask_plus("请输入要选择的协议>>>",[card.index for card in choose_list])
+        self.all_cards[result].react()
 
 class CardGeneral:
 
@@ -34,7 +41,7 @@ class CardGeneral:
     def print_self(self):
         Tree(
             "-------------------------->>",
-            f"|协议>{self.title}",
+            f"|协议[{self.index}]>{self.title}",
             f"|{self.description_txt}",
             f"|---{self.story_txt}"
         ).print_self()

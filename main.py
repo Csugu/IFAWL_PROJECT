@@ -2643,6 +2643,8 @@ class MainLoops:
         self.infinity_round += 1
         # 词条推进
         entry_manager.push_up()
+        # 协议选择
+        infinity_card_manager.choose_card()
         Txt.print_plus(f"轮次{self.infinity_round}>>准备开始>>")
 
     def infinity_mainloop(self):
