@@ -16,6 +16,7 @@ from modules.Module8_al_industry import recipe_for_all_al
 from modules.Module9_entry_manager import entry_manager
 from core.Module10_sound_manager import sounds_manager
 from modules.Module11_damage_previewer import damage_previewer
+from modules.Module12_infinity_card_manager import CardManager
 
 __VERSION__ = "IFAWL 1.1.0 'TOWARDS DAWN'"
 
@@ -51,7 +52,20 @@ class MyShip:
         self.update_total_al_rank()
         self.update_platform()
 
+    def set_default_al(self):
+        """
+        将舰船的终焉结设置为免费。不存储到硬盘
+        :return: 无
+        """
+        self.al_list = [al17, al18, al7]
+        self.update_total_al_rank()
+        self.update_platform()
+
     def update_total_al_rank(self):
+        """
+        更新舰船的总等级
+        :return: 无
+        """
         self.total_al_rank = 0
         for al in self.al_list:
             try:
@@ -60,6 +74,10 @@ class MyShip:
                 pass
 
     def update_platform(self):
+        """
+        更新舰船的平台
+        :return: 无
+        """
         if not self.al_list[0]:
             self.platform = "导弹"
             return
@@ -340,6 +358,9 @@ class Al_manager:
     def __init__(self):
         self.al_meta_data: dict[str, dict[str, str | int]] = json_loader.load("al_meta_data")
         self.all_al_list: dict[str, Al_general] = {}
+        self.al_max_rank_q = 0
+        self.al_max_rank_w = 0
+        self.al_max_rank_e = 0
 
     def choose_al(self, type_choosing: str | Literal["q", "w", "e", "all"]):
         if type_choosing == "all":
@@ -379,7 +400,108 @@ class Al_manager:
         my_ship.update_platform()
         my_ship.update_total_al_rank()
 
-    def clear_al(self):
+    def choose_al_with_limit(self, type_choosing: str | Literal["q", "w", "e"], max_rank:int|None=None):
+        """
+        在空间站外进行终焉结转换，通常具有等级限制因素。不保存至硬盘
+        :param type_choosing: 终焉结的type
+        :param max_rank: 最大可选等级，默认取自身维护的self.al_max_rank_qwe变量
+        :return: 无
+        """
+        if not max_rank:
+            match type_choosing:
+                case "q":
+                    max_rank = self.al_max_rank_q
+                case "w":
+                    max_rank = self.al_max_rank_w
+                case "e":
+                    max_rank = self.al_max_rank_e
+        al_list = [al for al in self.all_al_list.values() if al.type == type_choosing and al.rank_num <= max_rank]
+        al_list.sort(key=lambda al: al.rank_num)
+        for al in al_list:
+            al.print_description(show_num_in_storage=False)
+        # Al的选择
+        cn_type = {"q": "主武器", "w": "生存位", "e": "战术装备"}[type_choosing]
+        al_position = {"q": 0, "w": 1, "e": 2}[type_choosing]
+        inp = Txt.ask_plus(f"请选择要换装的{cn_type}| [enter]保持现有装备",[al.index for al in al_list]+[""])
+        if inp == "":
+            return
+        Txt.print_plus(f"{self.al_meta_data[inp]['short_name']}#{self.al_meta_data[inp]['index']} 已确认装备")
+        my_ship.al_list[al_position] = self.all_al_list[inp]
+        print()
+        self.check_if_kick_e()
+        my_ship.update_platform()
+        my_ship.update_total_al_rank()
+
+    def print_info_before_push_up(self,delta:int):
+        trees = {}
+        for type in ("q","w","e"):
+            max_rank = 0
+            match type:
+                case "q":
+                    max_rank = self.al_max_rank_q
+                case "w":
+                    max_rank = self.al_max_rank_w
+                case "e":
+                    max_rank = self.al_max_rank_e
+#            print(f"[{type}] >>> 当前已有 >>> 最大等级{max_rank}级")
+#            print()
+            als_below = [
+                f"{al.short_name}#{al.index}[{al.metadata['rank']}]" \
+                for al in sorted(self.all_al_list.values(),key=lambda al:al.rank_num) \
+                if al.rank_num <= max_rank and al.type == type
+            ]
+            als_delta = [
+                f"{al.short_name}#{al.index}[{al.metadata['rank']}]" \
+                for al in sorted(self.all_al_list.values(),key=lambda al:al.rank_num) \
+                if max_rank < al.rank_num <= max_rank + delta and al.type == type
+            ]
+            als_future = [
+                f"{al.short_name}#{al.index}[{al.metadata['rank']}]" \
+                for al in sorted(self.all_al_list.values(),key=lambda al:al.rank_num) \
+                if max_rank + delta < al.rank_num and al.type == type
+            ]
+#            for al_name in als_below:
+#                print(al_name,end=" ")
+#            print("\n")
+#            print(">>> 即将解锁 >>>\n")
+#            for al_name in als_delta:
+#                print(al_name,end=" ")
+#            print("\n")
+#            print(">>> 未来可解锁 >>>\n")
+#            for al_name in als_future:
+#                print(al_name,end=" ")
+#            print("\n")
+            trees[type] = Txt.Tree(
+                f"{type}系终焉结",
+                ">>> 当前已有 >>>",
+                als_below,
+                ">>> 即将解锁 >>>",
+                als_delta,
+                ">>> 未来可解锁 >>>",
+                als_future
+            )
+        Txt.n_column_print(
+            [tree.generate_line_list() for tree in trees.values()],
+            di_list=[30,30]
+        )
+
+    def push_up_limit(self,type_choosing: str | Literal["q", "w", "e"],delta:int):
+        """
+        将站外终焉结升级限制上推
+        :param type_choosing: 终焉结类型
+        :param delta: 上推等级
+        :return: 无
+        """
+        match type_choosing:
+            case "q":
+                self.al_max_rank_q += delta
+            case "w":
+                self.al_max_rank_w += delta
+            case "e":
+                self.al_max_rank_e += delta
+
+    @staticmethod
+    def clear_al():
         for index in range(len(my_ship.al_list)):
             if my_ship.al_list[index] is None:
                 continue
@@ -404,7 +526,8 @@ class Al_manager:
                 pass
         return out
 
-    def check_if_kick_e(self) -> bool:
+    @staticmethod
+    def check_if_kick_e() -> bool:
         q = my_ship.al_list[0]
         e = my_ship.al_list[2]
         if not q or not e:
@@ -470,18 +593,20 @@ class Al_general:
         """
         voices.inject_and_report(self.short_name, theme, data_injected)
 
-    def print_description(self):
+    def print_description(self,show_num_in_storage=True):
         """
         打印Al的描述，用于装备选择界面
         :return: 无
         """
         tag0: str = self.metadata["origin"]
         tag1: str = self.platform
+        num_in_storage = f"{storage_manager.get_value_of(str(self.index))}在仓库"\
+            if show_num_in_storage else ""
 
         print(
             Txt.adjust(f"[{self.index}] {tag0}{self.len_name}", 60),
             Txt.adjust(f"[{tag1}平台] [{self.metadata['rank']}]", 20),
-            f"{storage_manager.get_value_of(str(self.index))}在仓库"
+            num_in_storage
         )
         print(f">>>>\"{self.metadata['short_name_en']}\"")
         print(self.metadata["description_txt"])
@@ -2380,7 +2505,7 @@ class StationTreesManager:
 station_trees_manager = StationTreesManager()
 
 contract_manager = Contract_manager(storage_manager, list(al_manager.all_al_list.keys()))
-
+infinity_card_manager = CardManager(my_ship,enemy,entry_manager,al_manager)
 
 class MainLoops:
 
@@ -2611,10 +2736,12 @@ class MainLoops:
     def initialize_before_infinity(self):
         # 舰船初始化
         my_ship.initialize()
+        my_ship.set_default_al()
         shelter, missile = self.__get_adjusting_shelter_and_missile()
         enemy.initialize(shelter, missile)
         # 终焉结初始化
         al_manager.initialize_all_al()
+        al_manager.al_max_rank_q, al_manager.al_max_rank_w, al_manager.al_max_rank_e = 2,2,2
         # 骰子初始化
         dice.set_probability(0.8)
         dice.set_di(0.3)
@@ -2629,6 +2756,31 @@ class MainLoops:
         # 设置天数和轮数
         self.days = 1
         self.infinity_round = 1
+        # 终焉结选择
+        while 1:
+            station_trees_manager.all_tree_list["终焉结信息"].inject({
+            "total_al_rank": my_ship.total_al_rank,
+            "ssg_tag": "",
+            "ssg_num": "",
+            "q_information": my_ship.al_list[0].len_name \
+                if my_ship.al_list[0] \
+                else "[No Info]",
+            "w_information": my_ship.al_list[1].len_name \
+                if my_ship.al_list[1] \
+                else "[No Info]",
+            "e_information": my_ship.al_list[2].len_name \
+                if my_ship.al_list[2] \
+                else "[No Info]"
+            })
+            station_trees_manager.all_tree_list["终焉结信息"].print_self()
+            inp = input_plus("请输入您的准备操作| [q/w/e]更换终焉结| [enter]进入战斗")
+            match inp:
+                case "q"|"w"|"e":
+                    al_manager.choose_al_with_limit(inp)
+                case "":
+                    break
+                case _:
+                    pass
 
     def __initialize_between_infinity(self):
         # 重设敌方舰船
@@ -2642,11 +2794,38 @@ class MainLoops:
         self.infinity_round += 1
         # 词条推进
         entry_manager.push_up()
+        # 协议选择
+        infinity_card_manager.choose_card()
+        # 终焉结选择
+        while 1:
+            station_trees_manager.all_tree_list["终焉结信息"].inject({
+            "total_al_rank": my_ship.total_al_rank,
+            "ssg_tag": "",
+            "ssg_num": "",
+            "q_information": my_ship.al_list[0].len_name \
+                if my_ship.al_list[0] \
+                else "[No Info]",
+            "w_information": my_ship.al_list[1].len_name \
+                if my_ship.al_list[1] \
+                else "[No Info]",
+            "e_information": my_ship.al_list[2].len_name \
+                if my_ship.al_list[2] \
+                else "[No Info]"
+            })
+            station_trees_manager.all_tree_list["终焉结信息"].print_self()
+            inp = input_plus("请输入您的准备操作| [q/w/e]更换终焉结| [enter]进入战斗")
+            match inp:
+                case "q"|"w"|"e":
+                    al_manager.choose_al_with_limit(inp)
+                case "":
+                    break
+                case _:
+                    pass
         Txt.print_plus(f"轮次{self.infinity_round}>>准备开始>>")
 
     def infinity_mainloop(self):
-        sounds_manager.switch_to_bgm("fight")
         while 1:
+            sounds_manager.switch_to_bgm("fight")
             while 1:
                 # dawn
                 if (rank := entry_manager.get_rank_of("11")) != 0:
@@ -2684,7 +2863,6 @@ class MainLoops:
                 if (result := self.__is_over()) != 0:
                     break
                 self.days += 1
-            sounds_manager.stop_bgm()
             if result == 1:
                 print()
                 Txt.print_plus("=========我方胜利=========")
@@ -2706,11 +2884,6 @@ class MainLoops:
                 Txt.print_plus("=========敌方胜利=========")
                 print()
                 damage_previewer.show_total_dmg(my_ship.shelter, enemy.shelter)
-                if storage_manager.has_enough_ssd(my_ship.total_al_rank):
-                    storage_manager.cost_ssd(my_ship.total_al_rank)
-                else:
-                    storage_manager.destroy_al(my_ship.al_list)
-                    al_manager.clear_al()
                 Txt.print_plus(f"最高挑战轮次{self.infinity_round}\n")
                 input_plus("[enter]回站")
                 return
@@ -2876,5 +3049,6 @@ if __name__ == "__main__":
             case "2":
                 main_loops.initialize_before_infinity()
                 main_loops.infinity_mainloop()
+                my_ship.load_al()
             case _:
                 pass
