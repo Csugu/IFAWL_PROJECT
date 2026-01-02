@@ -178,7 +178,7 @@ class Advanced_tree(Tree):
             line_list.append("")
         return line_list
 
-def n_column_print(columns: list[list[str]], di_list: tuple[int]|int = ()):
+def n_column_print(columns: list[list[str]], di_list: list[int]|int = ()):
     """
     IFAWL N栏打印引擎
     columns: 二维列表。将要打印的一栏制成行切片（参考Tree.line_list() ），作为该列表的一项

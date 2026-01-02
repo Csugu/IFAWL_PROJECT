@@ -433,6 +433,7 @@ class Al_manager:
         my_ship.update_total_al_rank()
 
     def print_info_before_push_up(self,delta:int):
+        trees = {}
         for type in ("q","w","e"):
             max_rank = 0
             match type:
@@ -442,8 +443,8 @@ class Al_manager:
                     max_rank = self.al_max_rank_w
                 case "e":
                     max_rank = self.al_max_rank_e
-            print(f"[{type}] >>> 当前已有 >>> 最大等级{max_rank}级")
-            print()
+#            print(f"[{type}] >>> 当前已有 >>> 最大等级{max_rank}级")
+#            print()
             als_below = [
                 f"{al.short_name}#{al.index}[{al.metadata['rank']}]" \
                 for al in sorted(self.all_al_list.values(),key=lambda al:al.rank_num) \
@@ -459,17 +460,30 @@ class Al_manager:
                 for al in sorted(self.all_al_list.values(),key=lambda al:al.rank_num) \
                 if max_rank + delta < al.rank_num and al.type == type
             ]
-            for al_name in als_below:
-                print(al_name,end=" ")
-            print("\n")
-            print(">>> 即将解锁 >>>\n")
-            for al_name in als_delta:
-                print(al_name,end=" ")
-            print("\n")
-            print(">>> 未来可解锁 >>>\n")
-            for al_name in als_future:
-                print(al_name,end=" ")
-            print("\n")
+#            for al_name in als_below:
+#                print(al_name,end=" ")
+#            print("\n")
+#            print(">>> 即将解锁 >>>\n")
+#            for al_name in als_delta:
+#                print(al_name,end=" ")
+#            print("\n")
+#            print(">>> 未来可解锁 >>>\n")
+#            for al_name in als_future:
+#                print(al_name,end=" ")
+#            print("\n")
+            trees[type] = Txt.Tree(
+                f"{type}系终焉结",
+                ">>> 当前已有 >>>",
+                als_below,
+                ">>> 即将解锁 >>>",
+                als_delta,
+                ">>> 未来可解锁 >>>",
+                als_future
+            )
+        Txt.n_column_print(
+            [tree.generate_line_list() for tree in trees.values()],
+            di_list=[30,30]
+        )
 
     def push_up_limit(self,type_choosing: str | Literal["q", "w", "e"],delta:int):
         """
