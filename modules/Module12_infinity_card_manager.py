@@ -8,10 +8,11 @@ ALL_CARD_METADATA = json_loader.load("cards_meta_data")
 
 class CardManager:
 
-    def __init__(self,my_ship,enemy,entry_manager):
+    def __init__(self,my_ship,enemy,entry_manager,al_manager):
         self.my_ship = my_ship
         self.enemy = enemy
         self.entry_manager = entry_manager
+        self.al_manager = al_manager
         self.all_cards:dict[str,CardGeneral] = {
             index:globals()[f"Card{index}"](index,self.my_ship,self.enemy,self.entry_manager)
             for index in ALL_CARD_METADATA

@@ -52,7 +52,20 @@ class MyShip:
         self.update_total_al_rank()
         self.update_platform()
 
+    def set_default_al(self):
+        """
+        将舰船的终焉结设置为免费。不存储到硬盘
+        :return: 无
+        """
+        self.al_list = [al17, al18, al7]
+        self.update_total_al_rank()
+        self.update_platform()
+
     def update_total_al_rank(self):
+        """
+        更新舰船的总等级
+        :return: 无
+        """
         self.total_al_rank = 0
         for al in self.al_list:
             try:
@@ -61,6 +74,10 @@ class MyShip:
                 pass
 
     def update_platform(self):
+        """
+        更新舰船的平台
+        :return: 无
+        """
         if not self.al_list[0]:
             self.platform = "导弹"
             return
@@ -341,6 +358,9 @@ class Al_manager:
     def __init__(self):
         self.al_meta_data: dict[str, dict[str, str | int]] = json_loader.load("al_meta_data")
         self.all_al_list: dict[str, Al_general] = {}
+        self.al_max_rank_q = 0
+        self.al_max_rank_w = 0
+        self.al_max_rank_e = 0
 
     def choose_al(self, type_choosing: str | Literal["q", "w", "e", "all"]):
         if type_choosing == "all":
@@ -377,6 +397,38 @@ class Al_manager:
                     time.sleep(0.4)
                     break
         storage_manager.save_al_on_ship(my_ship.al_list)
+        my_ship.update_platform()
+        my_ship.update_total_al_rank()
+
+    def choose_al_with_limit(self, type_choosing: str | Literal["q", "w", "e"], max_rank:int|None=None):
+        """
+        在空间站外进行终焉结转换，通常具有等级限制因素。不保存至硬盘
+        :param type_choosing: 终焉结的type
+        :param max_rank: 最大可选等级，默认取自身维护的self.al_max_rank_qwe变量
+        :return: 无
+        """
+        if not max_rank:
+            match type_choosing:
+                case "q":
+                    max_rank = self.al_max_rank_q
+                case "w":
+                    max_rank = self.al_max_rank_w
+                case "e":
+                    max_rank = self.al_max_rank_e
+        al_list = [al for al in self.all_al_list.values() if al.type == type_choosing and al.rank_num <= max_rank]
+        al_list.sort(key=lambda al: al.rank_num)
+        for al in al_list:
+            al.print_description(show_num_in_storage=False)
+        # Al的选择
+        cn_type = {"q": "主武器", "w": "生存位", "e": "战术装备"}[type_choosing]
+        al_position = {"q": 0, "w": 1, "e": 2}[type_choosing]
+        inp = Txt.ask_plus(f"请选择要换装的{cn_type}| [enter]保持现有装备",[al.index for al in al_list]+[""])
+        if inp == "":
+            return
+        Txt.print_plus(f"{self.al_meta_data[inp]['short_name']}#{self.al_meta_data[inp]['index']} 已确认装备")
+        my_ship.al_list[al_position] = self.all_al_list[inp]
+        print()
+        self.check_if_kick_e()
         my_ship.update_platform()
         my_ship.update_total_al_rank()
 
@@ -471,18 +523,20 @@ class Al_general:
         """
         voices.inject_and_report(self.short_name, theme, data_injected)
 
-    def print_description(self):
+    def print_description(self,show_num_in_storage=True):
         """
         打印Al的描述，用于装备选择界面
         :return: 无
         """
         tag0: str = self.metadata["origin"]
         tag1: str = self.platform
+        num_in_storage = f"{storage_manager.get_value_of(str(self.index))}在仓库"\
+            if show_num_in_storage else ""
 
         print(
             Txt.adjust(f"[{self.index}] {tag0}{self.len_name}", 60),
             Txt.adjust(f"[{tag1}平台] [{self.metadata['rank']}]", 20),
-            f"{storage_manager.get_value_of(str(self.index))}在仓库"
+            num_in_storage
         )
         print(f">>>>\"{self.metadata['short_name_en']}\"")
         print(self.metadata["description_txt"])
@@ -2381,7 +2435,7 @@ class StationTreesManager:
 station_trees_manager = StationTreesManager()
 
 contract_manager = Contract_manager(storage_manager, list(al_manager.all_al_list.keys()))
-infinity_card_manager = CardManager(my_ship,enemy,entry_manager)
+infinity_card_manager = CardManager(my_ship,enemy,entry_manager,al_manager)
 
 class MainLoops:
 
@@ -2873,5 +2927,6 @@ if __name__ == "__main__":
             case "2":
                 main_loops.initialize_before_infinity()
                 main_loops.infinity_mainloop()
+                my_ship.load_al()
             case _:
                 pass
