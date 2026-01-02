@@ -14,12 +14,12 @@ class CardManager:
         self.entry_manager = entry_manager
         self.al_manager = al_manager
         self.all_cards:dict[str,CardGeneral] = {
-            index:globals()[f"Card{index}"](index,self.my_ship,self.enemy,self.entry_manager)
+            index:globals()[f"Card{index}"](index,self.my_ship,self.enemy,self.entry_manager,self.al_manager)
             for index in ALL_CARD_METADATA
         }
 
     def choose_card(self):
-        choose_list:list[CardGeneral] = random.sample(list(self.all_cards.values()),k=2)
+        choose_list:list[CardGeneral] = random.sample(list(self.all_cards.values()),k=3)
         for card in choose_list:
             card.print_self()
         result = ask_plus("请输入要选择的协议>>>",[card.index for card in choose_list])
@@ -27,7 +27,7 @@ class CardManager:
 
 class CardGeneral:
 
-    def __init__(self,index,my_ship,enemy,entry_manager):
+    def __init__(self,index,my_ship,enemy,entry_manager,al_manager):
         # 元数据字段
         self.index = str(index)
         self.metadata = ALL_CARD_METADATA[index]
@@ -38,6 +38,7 @@ class CardGeneral:
         self.my_ship = my_ship
         self.enemy = enemy
         self.entry_manager = entry_manager
+        self.al_manager = al_manager
 
     def print_self(self):
         Tree(
@@ -63,3 +64,10 @@ class Card2(CardGeneral): # 抑制剂
 
     def react(self):
         self.entry_manager.pull_down()
+
+class Card3(CardGeneral): # 终焉结支援
+
+    def react(self):
+        self.al_manager.print_info_before_push_up(2)
+        inp = ask_plus("[q/w/e]输入终焉结类别以提升最大等级",["q","w","e"])
+        self.al_manager.push_up_limit(inp,2)

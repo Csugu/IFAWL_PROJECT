@@ -2736,6 +2736,7 @@ class MainLoops:
     def initialize_before_infinity(self):
         # 舰船初始化
         my_ship.initialize()
+        my_ship.set_default_al()
         shelter, missile = self.__get_adjusting_shelter_and_missile()
         enemy.initialize(shelter, missile)
         # 终焉结初始化
@@ -2755,6 +2756,31 @@ class MainLoops:
         # 设置天数和轮数
         self.days = 1
         self.infinity_round = 1
+        # 终焉结选择
+        while 1:
+            station_trees_manager.all_tree_list["终焉结信息"].inject({
+            "total_al_rank": my_ship.total_al_rank,
+            "ssg_tag": "",
+            "ssg_num": "",
+            "q_information": my_ship.al_list[0].len_name \
+                if my_ship.al_list[0] \
+                else "[No Info]",
+            "w_information": my_ship.al_list[1].len_name \
+                if my_ship.al_list[1] \
+                else "[No Info]",
+            "e_information": my_ship.al_list[2].len_name \
+                if my_ship.al_list[2] \
+                else "[No Info]"
+            })
+            station_trees_manager.all_tree_list["终焉结信息"].print_self()
+            inp = input_plus("请输入您的准备操作| [q/w/e]更换终焉结| [enter]进入战斗")
+            match inp:
+                case "q"|"w"|"e":
+                    al_manager.choose_al_with_limit(inp)
+                case "":
+                    break
+                case _:
+                    pass
 
     def __initialize_between_infinity(self):
         # 重设敌方舰船
@@ -2770,6 +2796,31 @@ class MainLoops:
         entry_manager.push_up()
         # 协议选择
         infinity_card_manager.choose_card()
+        # 终焉结选择
+        while 1:
+            station_trees_manager.all_tree_list["终焉结信息"].inject({
+            "total_al_rank": my_ship.total_al_rank,
+            "ssg_tag": "",
+            "ssg_num": "",
+            "q_information": my_ship.al_list[0].len_name \
+                if my_ship.al_list[0] \
+                else "[No Info]",
+            "w_information": my_ship.al_list[1].len_name \
+                if my_ship.al_list[1] \
+                else "[No Info]",
+            "e_information": my_ship.al_list[2].len_name \
+                if my_ship.al_list[2] \
+                else "[No Info]"
+            })
+            station_trees_manager.all_tree_list["终焉结信息"].print_self()
+            inp = input_plus("请输入您的准备操作| [q/w/e]更换终焉结| [enter]进入战斗")
+            match inp:
+                case "q"|"w"|"e":
+                    al_manager.choose_al_with_limit(inp)
+                case "":
+                    break
+                case _:
+                    pass
         Txt.print_plus(f"轮次{self.infinity_round}>>准备开始>>")
 
     def infinity_mainloop(self):
