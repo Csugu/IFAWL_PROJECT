@@ -1593,6 +1593,7 @@ class Al27(Al_general):  # 瞳猫
         if self.is_on_my_ship() and self.state > 0:
             self.state = 0
             self.report("层数清空")
+            return int(atk*1.5)
         return atk
 
     def reduce_enemy_attack(self, atk):
@@ -1834,7 +1835,7 @@ class Al33(Al_general):  # 蛊
     def react(self):
         #p_c_manager.boom_now()
         if my_ship.missile > 0 and enemy.shelter >= 5:
-            my_ship.missile -= 1
+            my_ship.load(-1)
             pre_poi_list = [60, 40, 30, 10, 10]
             num = random.randint(135, 246)
             self.inject_and_report("射线攻击", {"num": num})
@@ -1870,7 +1871,7 @@ class Al33(Al_general):  # 蛊
     def print_poisoned_shelter(self):
         if enemy.shelter > 0:
             future = self.state.copy()
-            if enemy.missile > 0 and enemy.shelter >= 5:
+            if my_ship.missile > 0 and enemy.shelter >= 5:
                 pre_poi_list = [60, 40, 30, 10, 10]
             else:
                 pre_poi_list = [40, 30, 30, 0, 0]
@@ -2272,15 +2273,17 @@ class Al39(Al_general):  # 黎明维多利亚
                 voices.report(my_ship.platform, "发射")
         else:
             rest = (self.state - 1) // 2
+            self.state = 0
             launch_num = min(rest, my_ship.missile)
             if launch_num <= 0:
                 self.report("导弹不足")
                 return
             for _ in range(launch_num):
-                my_ship.attack(1, DamageType.MISSILE_LAUNCH)
+                my_ship.attack(2, DamageType.MISSILE_LAUNCH)
                 my_ship.load(-1)
+            self.report("下线")
             enemy.attack(launch_num - 1)
-            self.state = 1
+            
 
     def suggest(self):
         if self.state % 2 == 0:
@@ -2288,7 +2291,7 @@ class Al39(Al_general):  # 黎明维多利亚
         elif self.state in [11, 9]:
             return f"[保守状态]剩余层数>{int((self.state - 1) / 2)}/5|[1/q]发射增强导弹"
         else:
-            return f"[爆发状态]剩余层数>{int((self.state - 1) / 2)}|[1]发射增强导弹|[q]全弹发射 扣除{int(min((self.state - 1) // 2, my_ship.missile))}点护盾"
+            return f"[爆发状态]剩余层数>{int((self.state - 1) / 2)}|[1]发射增强导弹|[q]全弹发射 扣除{int(min((self.state - 1) // 2, my_ship.missile))-1}点护盾"
 
 
 al39 = Al39(39)
@@ -2333,6 +2336,46 @@ class Al40(Al_general):  # 冷水
 
 al40 = Al40(40)
 
+class Al41(Al_general): # 昏离
+
+    def react(self):
+        if self.state == 0:
+            if my_ship.missile>0:
+                my_ship.load(-1)
+                my_ship.heal(3)
+                self.report("保守模式治疗加成")
+            else:
+                my_ship.load(2)
+            self.state = -3
+
+    def operate_in_afternoon(self):
+        if self.state >= -3 and my_ship.shelter <= 0:
+            if my_ship.missile > 0:
+                my_ship.load(-1)
+            self.state = -6
+            my_ship.shelter = 3
+            self.report("激进模式保护")
+        if self.state < 0:
+            self.state += 1
+    
+    def reduce_enemy_attack(self, atk):
+        if atk > 1:
+            my_ship.load(atk)
+            self.report("上弹")
+        return atk
+    
+    def suggest(self):
+        if self.state == 0 and my_ship.missile > 0:
+            return "[w]消耗弹药回复三点护盾"
+        elif self.state == 0 and my_ship.missile == 0:
+            return "[w]回复两点弹药"
+        elif  -3 <= self.state < 0:
+            return f"[急救激活中]扣除一弹药（若有）并强行把护盾抬至三点|[主动冷却中]剩余{-self.state}天"
+        else:
+            return f"[急救冷却中]剩余{-3-self.state}天|[主动冷却中]剩余{-self.state}天"
+
+al41=Al41(41)
+                
 
 class FieldPrinter:
 
