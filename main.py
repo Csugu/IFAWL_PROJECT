@@ -2095,7 +2095,7 @@ class Al36(Al_general):  # 西岭
 al36 = Al36(36)
 
 
-class Al37(Al_general):  #星尘
+class Al37(Al_general): # 星尘
 
     def react(self):
         if self.state < 0:
@@ -2335,14 +2335,14 @@ class Al40(Al_general):  # 冷水
 
 al40 = Al40(40)
 
-class Al41(Al_general): # 昏离
+class Al41(Al_general): # 暮离
 
     def react(self):
         if self.state == 0:
             if my_ship.missile>0:
                 my_ship.load(-1)
                 my_ship.heal(3)
-                self.report("保守模式治疗加成")
+                self.report("耗弹治疗")
             else:
                 my_ship.load(2)
             self.state = -3
@@ -2353,14 +2353,14 @@ class Al41(Al_general): # 昏离
                 my_ship.load(-1)
             self.state = -6
             my_ship.shelter = 3
-            self.report("激进模式保护")
+            self.report("急救")
         if self.state < 0:
             self.state += 1
     
     def reduce_enemy_attack(self, atk):
         if atk > 1:
             my_ship.load(atk)
-            self.report("上弹")
+            self.report("受击上弹")
         return atk
     
     def suggest(self):
