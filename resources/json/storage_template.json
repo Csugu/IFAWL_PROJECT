@@ -3,7 +3,8 @@
     "ship_name": "旅行者",
     "al_on_ship": ["","",""],
     "entry_rank": {},
-    "infinity_max_round": 0
+    "max_infinity_round": 0,
+    "max_disaster_point": 0
   },
   "materials": {
     "三钛合金":10,

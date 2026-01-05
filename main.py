@@ -2500,7 +2500,8 @@ class StationTreesManager:
             "username": storage_manager.username,
             "ship_name": storage_manager.get_value_of("ship_name"),
             "isk_num": storage_manager.get_value_of("联邦信用点"),
-            "cmp_num": storage_manager.get_value_of("合约纪念点")
+            "max_disaster_point": storage_manager.get_value_of("max_disaster_point"),
+            "max_infinity_round": storage_manager.get_value_of("max_infinity_round")
         })
         self.all_tree_list["按键导航"].inject({})
         self.all_tree_list["终焉结信息"].inject({
