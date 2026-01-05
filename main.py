@@ -2929,6 +2929,7 @@ class MainLoops:
                 print()
                 damage_previewer.show_total_dmg(my_ship.shelter, enemy.shelter)
                 Txt.print_plus(f"最高挑战轮次{self.infinity_round}\n")
+                storage_manager.set_value_of("max_infinity_round", self.infinity_round)
                 input_plus("[enter]回站")
                 return
 
