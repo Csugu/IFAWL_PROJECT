@@ -52,8 +52,8 @@ class Session:
     """
     会话类，封装一个会话的所有段落
     """
-    def __init__(self, session_id: int, session_str: str):
-        self.session_id = session_id
+    def __init__(self, session_str: str):
+        self.session_id = int(session_str)
         self.paragraphs: dict[int, Paragraph] = {}
         
         # 创建段落对象
@@ -96,7 +96,7 @@ class PlotManager:
         # 创建每个会话对象
         for session in ALL_POLT_DATA:
             session_index = int(session)
-            self.sessions[session_index] = Session(session_index, session)
+            self.sessions[session_index] = Session(session)
             
         # 信息映射表
         self.information_map = {}
