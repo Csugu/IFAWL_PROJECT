@@ -62,7 +62,7 @@ class Paragraph:
             elif processed.startswith("+"): # 剧情分支的多选项
                 count = int(processed[1])
                 content = processed[3:]
-                next_index = ask_plus(content,list(range(0,count)))
+                next_index = int(ask_plus(content,list(range(0,count))))
                 print()
             elif processed.startswith("/"):  # 非剧情分支的多选项
                 count = int(processed[1])
