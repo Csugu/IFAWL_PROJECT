@@ -35,6 +35,7 @@ class MyShip:
         self.al_list: list[Al_general | None] = [None, None, None]
         self.total_al_rank = 0
         self.platform = "导弹"
+        self.life_for_ppve = 0
 
     def load_al(self):
         al_str_list = storage_manager.get_al_on_ship()
@@ -339,6 +340,18 @@ class EnemyShip:
         self.shelter = 2 + adj_shelter
         self.target_ship = my_ship
 
+    def ppve_react_plus(self):
+        ##
+        if entry_manager.current_mode == Modes.PPVE:
+            target_ship_before = self.target_ship
+            while 1:
+                self.target_ship = random.choice([my_ship,another_ship])
+                if not main_loops.__is_near_death(self.target_ship):
+                    break
+            if target_ship_before != self.target_ship:
+                Txt.print_plus("敌方目标改变，注意警戒！")
+        ##
+
     def react(self):
         al35.check_if_extra_act()
         if self.shelter < 1:  # 如果护盾已被削弱
@@ -365,14 +378,8 @@ class EnemyShip:
                 self.heal(1)
             case _:
                 Txt.print_plus("敌人跳过了这一天！")
-        ##
-        if entry_manager.current_mode == Modes.PPVE:
-            target_ship_before = self.target_ship
-            self.target_ship = random.choice([my_ship,another_ship])
-            if target_ship_before != self.target_ship:
-                Txt.print_plus("敌方目标改变，注意警戒！")
-        ##
 
+        self.ppve_react_plus()
 
 enemy = EnemyShip()
 
@@ -2727,6 +2734,15 @@ class MainLoops:
         return 0
 
     @staticmethod
+    def __is_near_death(ship:MyShip) -> bool:
+        if ship.shelter < 0:
+            return 1
+        if entry_manager.get_rank_of("5") != 0 and ship.get_equivalent_shelter_of_ship() <= 0:
+            return 1
+        return 0
+
+
+    @staticmethod
     def __get_adjusting_shelter_and_missile() -> tuple[int, int]:
         """
         基于SBMM理念对敌方护盾和导弹进行增强
@@ -2747,6 +2763,25 @@ class MainLoops:
         if al26.is_my_turn():
             return 1
         return 0
+    
+    def is_over_for_ppve(self):
+        if self.__is_near_death(my_ship) and self.__is_near_death(another_ship):
+            return -1
+        if enemy.shelter < 0:
+            return 1
+        for ship in [my_ship,another_ship]:
+            ship:MyShip
+            if self.__is_near_death(ship):
+                if ship.life_for_ppve == -1:
+                    return -1
+                elif ship.life_for_ppve == 0:
+                    ship.life_for_ppve = self.days+5
+                else:
+                    if self.days == ship.life_for_ppve:
+                        return -1
+        return 0
+
+
 
     def initialize_before_fight(self):
         # 舰船初始化
@@ -3149,11 +3184,7 @@ class MainLoops:
                         al.operate_in_our_turn()
 
             # dusk
-            if entry_manager.get_rank_of("5") != 0 and (my_ship.get_equivalent_shelter_of_ship() <= 0 or another_ship.get_equivalent_shelter_of_ship() <= 0):
-                entry_manager.all_entries["5"].print_when_react()
-                result = -1
-                break
-            if (result := self.__is_over()) != 0:
+            if (result := self.is_over_for_ppve()) != 0:
                 break
             self.days += 1
         sounds_manager.stop_bgm()
@@ -3161,7 +3192,7 @@ class MainLoops:
             print()
             Txt.print_plus("=========我方胜利=========")
             print()
-            damage_previewer.show_total_dmg(my_ship.shelter, enemy.shelter)
+            #damage_previewer.show_total_dmg(my_ship.shelter, enemy.shelter)
             sounds_manager.switch_to_bgm("win")
             input_plus("[enter]回站")
             sounds_manager.stop_bgm()
@@ -3169,7 +3200,7 @@ class MainLoops:
         print()
         Txt.print_plus("=========敌方胜利=========")
         print()
-        damage_previewer.show_total_dmg(my_ship.shelter, enemy.shelter)
+        #damage_previewer.show_total_dmg(my_ship.shelter, enemy.shelter)
         input_plus("[enter]回站")
         return
 
