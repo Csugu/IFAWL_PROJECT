@@ -2626,7 +2626,7 @@ class MainLoops:
             field_printer.print_key_prompt()
 
             # noon
-            if who == 1:
+            if who == Side.PLAYER:
                 Txt.print_plus("今天由我方行动")
                 my_ship.react()
             else:
@@ -2637,7 +2637,7 @@ class MainLoops:
             for al in my_ship.al_list:
                 if al:
                     al.operate_in_afternoon()
-                    if who == 1:
+                    if who == Side.PLAYER:
                         al.operate_in_our_turn()
 
             # dusk
@@ -2714,7 +2714,7 @@ class MainLoops:
             field_printer.print_key_prompt()
 
             # noon
-            if who == 1:
+            if who == Side.PLAYER:
                 Txt.print_plus("今天由我方行动")
                 my_ship.react()
             else:
@@ -2728,7 +2728,7 @@ class MainLoops:
             for al in my_ship.al_list:
                 if al:
                     al.operate_in_afternoon()
-                    if who == 1:
+                    if who == Side.PLAYER:
                         al.operate_in_our_turn()
 
             # dusk
@@ -2878,7 +2878,7 @@ class MainLoops:
                 field_printer.print_key_prompt()
 
                 # noon
-                if who == 1:
+                if who == Side.PLAYER:
                     Txt.print_plus("今天由我方行动")
                     my_ship.react()
                 else:
@@ -2889,7 +2889,7 @@ class MainLoops:
                 for al in my_ship.al_list:
                     if al:
                         al.operate_in_afternoon()
-                        if who == 1:
+                        if who == Side.PLAYER:
                             al.operate_in_our_turn()
 
                 # dusk
