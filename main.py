@@ -201,22 +201,25 @@ class MyShip:
             return operation
         match operation[0]:
             case "m":
-                if len(operation) > 1 and operation[1:].isdigit():
-                    my_ship.load(int(operation[1:]))
-                    another_ship.load(int(operation[1:]))
-                    self.load(-int(operation[1:])*2)
+                if len(operation) > 1 and operation[1].isdigit():
+                    load = min(int(operation[1]),int(self.missile/2))
+                    my_ship.load(load)
+                    another_ship.load(load)
+                    self.load(-load*2)
+                    voices.report(self.platform,"弹药转移")
             case "s":
-                if len(operation) > 1 and operation[1:].isdigit():
-                    my_ship.heal(int(operation[1:]))
-                    another_ship.heal(int(operation[1:]))
-                    enemy.attack(int(operation[1:])*2,self)
+                    my_ship.heal(1)
+                    another_ship.heal(1)
+                    enemy.attack(2,self)
+                    voices.report("护盾","相互治疗")
             case "c":
                 if my_ship.life_for_ppve > 0:
-                    enemy.attack(-1-my_ship.shelter,self)
+                    enemy.attack(1-my_ship.shelter,self)
                     my_ship.shelter = 1
                 if another_ship.life_for_ppve > 0:
-                    enemy.attack(-1-another_ship.shelter,self)
+                    enemy.attack(1-another_ship.shelter,self)
                     another_ship.shelter = 1
+                voices.report("护盾","救你一命！")
         return "pass"
 
     def react(self):
@@ -371,10 +374,10 @@ class EnemyShip:
         ##
         if entry_manager.current_mode == Modes.PPVE:
             target_ship_before = self.target_ship
-            while 1:
-                self.target_ship = random.choice([my_ship,another_ship])
-                if self.target_ship.life_for_ppve <= 0:
-                    break
+            if main_loops.is_near_death(my_ship) and not main_loops.is_near_death(another_ship):
+                self.target_ship = another_ship
+            if main_loops.is_near_death(another_ship) and not main_loops.is_near_death(my_ship):
+                self.target_ship = my_ship
             if target_ship_before != self.target_ship:
                 Txt.print_plus("敌方目标改变，注意警戒！")
         ##
@@ -1735,6 +1738,7 @@ class Al28(Al_general):  # 鹘鸮
 
     def react(self):
         if self.state == 0:
+            enemy.target_ship = self.ship
             self.state = 1
             self.report("启动报告")
 
@@ -2336,6 +2340,7 @@ class Al38(Al_general):  # 澈
             print_list += ["--X--"] * self.state[0]
         else:
             print_list.append(f"--X-- x{self.state[0]}")
+        return print_list
 
     def suggest(self):
         if self.state[1]:
@@ -2552,6 +2557,8 @@ class FieldPrinter:
         left = []
         if me.life_for_ppve > 0:
             left.append("("+"+"*(me.life_for_ppve-main_loops.days+1)+")")
+        elif me.life_for_ppve == -1:
+            left.append("(-)")
         if opposite.target_ship == me:
             left.append("@")
         for al in reversed(me.al_list):
@@ -2638,6 +2645,8 @@ class FieldPrinter:
     def generate_suggestion_ppve_print(self):
         Txt.n_column_print([self.generate_suggestion_tree(my_ship).generate_line_list(),self.generate_suggestion_tree(another_ship).generate_line_list()])
 
+    def ppve_help_prompt(self):
+        print("[m1~m9]转移1~9枚弹药 [s]转移一层护盾 [c]救援")
 
 
     def print_key_prompt(self,ship = my_ship):
@@ -2805,6 +2814,7 @@ class MainLoops:
             ship:MyShip
             if not self.is_near_death(ship) and ship.life_for_ppve > 0:
                 ship.life_for_ppve = -1
+                voices.report("企鹅","注意，你已消耗一次免费次数")
             elif self.is_near_death(ship):
                 if ship.life_for_ppve == -1:
                     return -1
@@ -3199,6 +3209,7 @@ class MainLoops:
             # noon
             if who == 1:
                 Txt.print_plus("今天由我方行动")
+                field_printer.ppve_help_prompt()
                 if not self.is_near_death(my_ship):
                     Txt.print_plus("请一号指挥官行动")
                     field_printer.print_key_prompt(my_ship)
@@ -3226,6 +3237,9 @@ class MainLoops:
                 break
             self.days += 1
         sounds_manager.stop_bgm()
+        for al in another_ship.al_list:
+            if al:
+                al.ship = my_ship
         if result == 1:
             print()
             Txt.print_plus("=========我方胜利=========")
