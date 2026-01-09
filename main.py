@@ -3448,7 +3448,7 @@ class MainLoops:
             "[0] 基本对战",
             "[1] 战死之地",
             "[2] 无尽模式",
-            "[3] ppve",
+            "[3] 联合狩猎",
             "[enter] 回站"
         ).print_self()
         Txt.n_column_print(
@@ -3469,7 +3469,13 @@ class MainLoops:
                 "在模拟器中与多波次敌人进行战斗",
                 "不启用仓库的终焉结",
                 "战斗结束后无奖励"
-            ).generate_line_list()]
+            ).generate_line_list()+
+             Txt.Tree(
+                 "[3] 联合狩猎",
+                 "在模拟器中与另一位指挥官合作打击敌方",
+                 "不启用仓库的终焉结",
+                 "战斗结束后无奖励"
+             ).generate_line_list()]
         )
         des = Txt.ask_plus("请输入目的地>>>", ["0", "1", "2", "3",""])
         return des
