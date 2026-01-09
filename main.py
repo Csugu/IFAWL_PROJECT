@@ -6,6 +6,7 @@ from typing import Literal
 
 from core import Module1_txt as Txt
 from core.Module0_enums import DamageType, Modes, Side
+from core.Module14_communication import Server
 from core.Module1_txt import input_plus
 from core.Module2_json_loader import json_loader
 from modules.Module3_storage_manager import storage_manager
@@ -229,13 +230,75 @@ class MyShip:
         :return: 无
         """
         #自动驾驶
-        field_printer =  [self.shelter, self.missile, enemy.shelter, enemy.missile, 0]
+        field_info =  [self.shelter, self.missile, enemy.shelter, enemy.missile, 0]
         for al in self.al_list:
             if al != None and type(al.state) == int:
-                field_printer.append(al.state)
+                field_info.append(al.state)
             else:
-                field_printer.append(0)
-        operation = auto_pilot.get_operation(field_printer)
+                field_info.append(0)
+        operation = auto_pilot.get_operation(field_info)
+
+        operation = self.ppve_react_extra(operation)
+
+        for al in self.al_list:
+            try:
+                operation = al.adjust_operation(operation)
+            except AttributeError:
+                pass
+        if self.missile < 1 and operation == "1":
+            operation = "0"
+        match operation:
+            case "0" | " ":
+                self.load(1)
+                voices.report(self.platform, "上弹")
+            case "1":
+                match self.platform:
+                    case "导弹":
+                        atk_type = DamageType.MISSILE_LAUNCH
+                    case "粒子炮":
+                        atk_type = DamageType.PARTICLE_CANNON_SHOOTING
+                    case _:
+                        atk_type = DamageType.MISSILE_LAUNCH
+                result = self.attack(1, atk_type)
+                self.load(-1)
+                if result > 0:
+                    voices.report(self.platform, "发射")
+            case "2":
+                result = self.heal(1)
+                if result > 0:
+                    voices.report("护盾", "上盾")
+            case "q":
+                try:
+                    self.al_list[0].react()
+                except AttributeError:
+                    Txt.print_plus("注意·船上没有q系终焉结")
+            case "w":
+                try:
+                    self.al_list[1].react()
+                except AttributeError:
+                    Txt.print_plus("注意·船上没有w系终焉结")
+            case "e":
+                try:
+                    self.al_list[2].react()
+                except AttributeError:
+                    Txt.print_plus("注意·船上没有e系终焉结")
+            case "pass":
+                pass
+            case _:
+                Txt.print_plus("你跳过了这一天！")
+                auto_pilot.refresh()
+
+    def react_for_ppve(self,server=None):
+        """
+        进行回合中响应
+        :return: 无
+        """
+        # 自动驾驶
+
+        if not server:
+            operation = input_plus("[对长机指挥官]请输入你的操作>>>")
+        else:
+            operation = server.ask("[对僚机指挥官]请输入你的操作>>>")
 
         operation = self.ppve_react_extra(operation)
 
@@ -313,6 +376,22 @@ class EnemyShip:
             return
         for _ in range(self.shelter):
             print("-----")
+
+    def generate_self_missile(self, blind=False):
+        if blind:
+            return "[No Info]\n"
+        result = ""
+        for _ in range(self.missile):
+            result += "[]"
+        return result
+
+    def generate_self_shelter(self, blind=False):
+        if blind:
+            return "[No Info]\n"
+        result = ""
+        for _ in range(self.shelter):
+            result += "-----\n"
+        return result
 
     def attack(self, atk: int,force_target:MyShip|None = None):
         """
@@ -2617,6 +2696,70 @@ class FieldPrinter:
         Txt.n_column_print([left,right])
         damage_previewer.update(me.shelter, opposite.shelter)
 
+    def generate_for_ppve(self, me: MyShip,another:MyShip ,opposite: EnemyShip):
+        out = ""
+        out += opposite.generate_self_missile(entry_manager.get_rank_of("2") >= 1)
+        out += "\n"
+        out += opposite.generate_self_shelter()
+        #damage_previewer.print_enemy_dmg(opposite.shelter) TODO
+        out += "\n\n\n"
+
+        left = []
+        if me.life_for_ppve > 0:
+            left.append("("+"+"*(me.life_for_ppve-main_loops.days+1)+")")
+        elif me.life_for_ppve == -1:
+            left.append("(-)")
+        if opposite.target_ship == me:
+            left.append("@")
+        for al in reversed(me.al_list):
+            try:
+                left += al.print_self_before_shelter(return_list=True)
+            except AttributeError:
+                pass
+        left += me.generate_shelter_list(entry_manager.get_rank_of("2") >= 2)
+        for al in reversed(me.al_list):
+            try:
+                left += al.print_self_behind_shelter(return_list = True)
+            except AttributeError:
+                pass
+        left += me.generate_missile_list()
+        left += [""]
+        for al in reversed(me.al_list):
+            try:
+                left += al.print_self_behind_missile(return_list= True)
+            except AttributeError:
+                pass
+        left += [""]
+
+        right = []
+        if another.life_for_ppve > 0:
+            right.append("("+"+"*(another.life_for_ppve-main_loops.days+1)+")")
+        elif another.life_for_ppve == -1:
+            right.append("(-)")
+        if opposite.target_ship == another:
+            right.append("@")
+        for al in reversed(another.al_list):
+            try:
+                right += al.print_self_before_shelter(return_list = True)
+            except AttributeError:
+                pass
+        right += another.generate_shelter_list(entry_manager.get_rank_of("2") >= 2)
+        for al in reversed(another.al_list):
+            try:
+                right += al.print_self_behind_shelter(return_list = True)
+            except AttributeError:
+                pass
+        right += another.generate_missile_list()
+        right += [""]
+        for al in reversed(another.al_list):
+            try:
+                right += al.print_self_behind_missile(return_list = True)
+            except AttributeError:
+                pass
+        right += [""]
+        out += Txt.n_column_generate([left,right])
+        return out
+
     def print_basic_info(self, days):
         """
         打印战场基本信息
@@ -2635,6 +2778,20 @@ class FieldPrinter:
             Txt.print_plus("当前舰船位置>>敌方腹地危险区域")
         print()
 
+    def generate_basic_info(self, days) -> str:
+        out = "~~~~~~~~~~~~~~~~~~~~~~~~\n"
+        out += f"指挥官，今天是战线展开的第{days}天。\n"
+        if days < 5:
+            out += "当前舰船位置>>正在离港\n"
+        elif days < 10:
+            out += "当前舰船位置>>我方领土边缘\n"
+        elif days <= 20:
+            out += "当前舰船位置>>边境核心战场\n"
+        elif days > 20:
+            out += "当前舰船位置>>敌方腹地危险区域\n"
+        out += "\n"
+        return out
+
     def generate_suggestion_tree(self,ship = my_ship):
         suggestion_list = []
         for al in ship.al_list:
@@ -2649,8 +2806,16 @@ class FieldPrinter:
             suggestion_list.append("空闲")
         return Txt.Tree("战斗辅助面板", suggestion_list)
     
-    def generate_suggestion_ppve_print(self):
-        Txt.n_column_print([self.generate_suggestion_tree(my_ship).generate_line_list(),self.generate_suggestion_tree(another_ship).generate_line_list()])
+    def print_suggestion_for_ppve(self):
+        Txt.n_column_print(
+            [self.generate_suggestion_tree(my_ship).generate_line_list(),
+             self.generate_suggestion_tree(another_ship).generate_line_list()]
+        )
+    def generate_suggestion_for_ppve(self) -> str:
+        return Txt.n_column_generate(
+            [self.generate_suggestion_tree(my_ship).generate_line_list(),
+             self.generate_suggestion_tree(another_ship).generate_line_list()]
+        )
 
     def ppve_help_prompt(self):
         print("[m1~m9]转移1~9枚弹药 [s]转移一层护盾 [c]救援")
@@ -2762,6 +2927,7 @@ station_trees_manager = StationTreesManager()
 class MainLoops:
 
     def __init__(self):
+        self.server = None
         self.days = 0
         self.entry_begin_day = 0
         self.entry_delta = 1
@@ -3174,6 +3340,10 @@ class MainLoops:
                 return
 
     def initialize_before_ppve(self):
+        # 服务器建立
+        self.server = Server()
+        self.server.connect()
+        # 终焉结选择
         another_ship.al_list = [al15,al14,al19]
         while 1:
             station_trees_manager.all_tree_list["终焉结信息"].inject({
@@ -3273,8 +3443,13 @@ class MainLoops:
             field_printer.print_basic_info(self.days)
             entry_manager.print_all_selected_rank()
             field_printer.print_for_ppve(my_ship,another_ship,enemy)
-            field_printer.generate_suggestion_ppve_print()
+            field_printer.print_suggestion_for_ppve()
 
+            self.server.send_str(field_printer.generate_basic_info(self.days)
+            +entry_manager.generate_str_of_all_selected_rank()
+            +field_printer.generate_for_ppve(my_ship,another_ship,enemy)
+            +field_printer.generate_suggestion_for_ppve()
+            )
 
             # noon
             if who == 1:
@@ -3283,11 +3458,11 @@ class MainLoops:
                 if not self.is_near_death(my_ship):
                     Txt.print_plus("请一号指挥官行动")
                     field_printer.print_key_prompt(my_ship)
-                    my_ship.react()
+                    my_ship.react_for_ppve()
                 if not self.is_near_death(another_ship):
                     Txt.print_plus("请二号指挥官行动")
                     field_printer.print_key_prompt(another_ship)
-                    another_ship.react()
+                    another_ship.react_for_ppve(self.server)
             else:
                 Txt.print_plus("今天由敌方行动")
                 enemy.react()
@@ -3316,6 +3491,8 @@ class MainLoops:
             print()
             #damage_previewer.show_total_dmg(my_ship.shelter, enemy.shelter)
             sounds_manager.switch_to_bgm("win")
+            self.server.send_exit("作战已结束")
+            self.server.close()
             input_plus("[enter]回站")
             sounds_manager.stop_bgm()
             return
@@ -3323,6 +3500,8 @@ class MainLoops:
         Txt.print_plus("=========敌方胜利=========")
         print()
         #damage_previewer.show_total_dmg(my_ship.shelter, enemy.shelter)
+        self.server.send_exit("作战已结束")
+        self.server.close()
         input_plus("[enter]回站")
         return
 
