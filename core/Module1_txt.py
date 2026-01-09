@@ -207,6 +207,37 @@ def n_column_print(columns: list[list[str]], di_list: list[int]|int = ()):
         line_str += columns[-1][line_index]
         print(line_str)
 
+def n_column_generate(columns: list[list[str]], di_list: list[int]|int = ()) -> str:
+    """
+    IFAWL N栏打印引擎
+    columns: 二维列表。将要打印的一栏制成行切片（参考Tree.line_list() ），作为该列表的一项
+    di_list: 栏左端间距列表。上过小学四年级的都学过植树问题，都知道长度要比columns少1
+    """
+
+    len_list = [len(i) for i in columns]
+    max_len = max(len_list)
+
+    if di_list == ():
+        di_list = [50 for _ in range(len(columns) - 1)]
+    elif type(di_list) == int:
+        di = di_list
+        di_list = [di for i in range(len(columns) - 1)]
+
+    for i in range(len(columns)):
+        for p in range(len(columns[i]), max_len):
+            columns[i].append("")
+
+    out = ""
+
+    for line_index in range(0, len(columns[0])):
+        line_str = ""
+        column_index = 0
+        for line_list in columns[:-1]:
+            line_str += adjust(line_list[line_index], di_list[column_index])
+            column_index += 1
+        line_str += columns[-1][line_index]
+        out += line_str + "\n"
+    return out
 
 def dict_give_and_get_print(father: dict, get: dict, give: dict):
     def print_main(zoom):

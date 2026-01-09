@@ -134,6 +134,15 @@ class EntryManager:
         print(out)
         print()
 
+    def generate_str_of_all_selected_rank(self):
+        out = ""
+        for entry in self.all_entries.values():
+            if entry.selected_rank != 0:
+                out += f"{entry.title}[{entry.RANK_STR_LIST[entry.selected_rank]}]  "
+        if not out:
+            out = "[无激活词条]"
+        return out + "\n\n"
+
     # 级别检索
 
     def get_rank_of(self,index:str) -> int:
