@@ -5,19 +5,20 @@ import time
 from typing import Literal
 
 from core import Module1_txt as Txt
-from core.Module0_enums import DamageType, Modes
+from core.Module0_enums import DamageType, Modes, Side
 from core.Module1_txt import input_plus
 from core.Module2_json_loader import json_loader
 from modules.Module3_storage_manager import storage_manager
 from modules.Module4_voices import voices
 from core.Module5_dice import dice
-from modules.Module6_market_manager import Contract_manager, Contract, tools
+from modules.Module6_market_manager import ContractManager, Contract, tools
 from modules.Module7_auto_pilot import auto_pilot
 from modules.Module8_al_industry import recipe_for_all_al
 from modules.Module9_entry_manager import entry_manager
 from core.Module10_sound_manager import sounds_manager
 from modules.Module11_damage_previewer import damage_previewer
 from modules.Module12_infinity_card_manager import CardManager
+from modules.Module13_plot_manager import plot_manager
 
 __VERSION__ = "IFAWL 1.2.0 'STARDUST INFINITY'"
 
@@ -1675,7 +1676,7 @@ class Al26(Al_general):  # 眠雀
             return "[e]控制敌方两次行动"
         elif self.state < 0:
             return f"[冷却中]剩余{-self.state}天"
-        elif self.state > 0 and dice.current_who == 1:
+        elif self.state > 0 and dice.current_who == Side.PLAYER:
             return f"[生效中]剩余{self.state}次"
         else:
             return "[支配中]输入敌方指令[0]装弹|[1]发射|[2]上盾"
@@ -1692,7 +1693,7 @@ class Al27(Al_general):  # 瞳猫
             self.report("充能")
 
     def operate_in_morning(self):
-        if self.is_on_ones_ship() and dice.current_who == 1 and self.state < 9:
+        if self.is_on_my_ship() and dice.current_who == Side.PLAYER and self.state < 9:
             self.state += 1
 
     def add_atk(self, atk, type):
@@ -1759,7 +1760,7 @@ class Al28(Al_general):  # 鹘鸮
         if self.state < 0:
             self.state += 1
             return
-        if dice.current_who == 0:
+        if dice.current_who == Side.ENEMY:
             if self.state == 1:
                 self.ship.load(2)
                 self.report("冷却")
@@ -1908,7 +1909,7 @@ class Al31(Al_general):  # 白鲟
     def operate_in_afternoon(self):
         if self.state < 0:
             self.state += 1
-        elif self.state > 0 and dice.current_who == 1:
+        elif self.state > 0 and dice.current_who == Side.PLAYER:
             self.state -= 1
             self.report("护盾流失")
             if self.state == 0:
@@ -2063,9 +2064,9 @@ class Al34(Al_general):  # 风间浦
             self.report("安全港就位")
             self.state[0] -= 1
 
-        if self.state[0] > BEGIN_COOLING and dice.current_who == 0:
+        if self.state[0] > BEGIN_COOLING and dice.current_who == Side.ENEMY:
             self.state[0] -= 1
-        elif 0 < self.state[0] <= BEGIN_COOLING and dice.current_who == 1:
+        elif 0 < self.state[0] <= BEGIN_COOLING and dice.current_who == Side.PLAYER:
             self.state[0] -= 1
 
     def reduce_enemy_attack(self, atk):  #实则不然
@@ -2101,28 +2102,28 @@ class Al35(Al_general):  # 青鹄
             self.state += 2
             self.report("充能")
         else:
-            if self.ship.missile > 1:
-                self.ship.attack(2, DamageType.ORDINARY_ATTACK)
-                self.ship.load(-2)
+            if my_ship.missile > 1:
+                my_ship.load(-2)
+                my_ship.attack(2, DamageType.ORDINARY_ATTACK)
                 self.state = 0
                 self.report("攻击")
             else:
-                self.ship.load(1)
-                if dice.current_who == 0:
-                    self.ship.load(1)
+                my_ship.load(1)
+                if dice.current_who == Side.ENEMY:
+                    my_ship.load(1)
                 self.report("装弹")
 
     def operate_in_morning(self):
         if self.is_on_ones_ship():
             self.state += 1
-        if self.state >= 4 and dice.current_who == 0:
-            self.ship.heal(1)
-            self.ship.load(1)
+        if self.state >= 4 and dice.current_who == Side.ENEMY:
+            my_ship.heal(1)
+            my_ship.load(1)
             self.report("准备")
 
     def check_if_extra_act(self):
 
-        if self.state >= 4 and dice.current_who == 0:
+        if self.state >= 4 and dice.current_who == Side.ENEMY:
             suggestion_tree = field_printer.generate_suggestion_tree()
             suggestion_tree.topic = "额外回合操作"
             suggestion_tree.print_self()
@@ -2181,7 +2182,7 @@ class Al36(Al_general):  # 西岭
             self.state = 0
 
     def operate_in_afternoon(self):
-        if self.state == 1 and dice.current_who == 1:
+        if self.state == 1 and dice.current_who == Side.PLAYER:
             if_auto = False
             count_shot = 40
             while count_shot > 0:
@@ -2267,7 +2268,7 @@ class Al37(Al_general): # 星尘
     def operate_in_afternoon(self):
         if self.state < 0:
             self.state += 1
-        if self.is_on_my_ship() and enemy.shelter<-1:
+        if self.is_on_my_ship() and enemy.shelter < -1:
             my_ship.load(int((-1-enemy.shelter)*0.5))
             enemy.shelter=-1
             self.report("能量回收")
@@ -2752,9 +2753,6 @@ class StationTreesManager:
 
 station_trees_manager = StationTreesManager()
 
-contract_manager = Contract_manager(storage_manager, list(al_manager.all_al_list.keys()))
-infinity_card_manager = CardManager(my_ship,enemy,entry_manager,al_manager)
-
 class MainLoops:
 
     def __init__(self):
@@ -2873,7 +2871,7 @@ class MainLoops:
             field_printer.print_key_prompt()
 
             # noon
-            if who == 1:
+            if who == Side.PLAYER:
                 Txt.print_plus("今天由我方行动")
                 my_ship.react()
             else:
@@ -2884,7 +2882,7 @@ class MainLoops:
             for al in my_ship.al_list:
                 if al:
                     al.operate_in_afternoon()
-                    if who == 1:
+                    if who == Side.PLAYER:
                         al.operate_in_our_turn()
 
             # dusk
@@ -2961,7 +2959,7 @@ class MainLoops:
             field_printer.print_key_prompt()
 
             # noon
-            if who == 1:
+            if who == Side.PLAYER:
                 Txt.print_plus("今天由我方行动")
                 my_ship.react()
             else:
@@ -2975,7 +2973,7 @@ class MainLoops:
             for al in my_ship.al_list:
                 if al:
                     al.operate_in_afternoon()
-                    if who == 1:
+                    if who == Side.PLAYER:
                         al.operate_in_our_turn()
 
             # dusk
@@ -3278,7 +3276,7 @@ class MainLoops:
                 field_printer.print_key_prompt()
 
                 # noon
-                if who == 1:
+                if who == Side.PLAYER:
                     Txt.print_plus("今天由我方行动")
                     my_ship.react()
                 else:
@@ -3289,7 +3287,7 @@ class MainLoops:
                 for al in my_ship.al_list:
                     if al:
                         al.operate_in_afternoon()
-                        if who == 1:
+                        if who == Side.PLAYER:
                             al.operate_in_our_turn()
 
                 # dusk
@@ -3479,6 +3477,9 @@ class MainLoops:
 
 main_loops = MainLoops()
 
+contract_manager = ContractManager(storage_manager, list(al_manager.all_al_list.keys()))
+infinity_card_manager = CardManager(my_ship,enemy,entry_manager,al_manager)
+plot_manager.set_storage_manager(storage_manager)
 
 def hello():
     sounds_manager.switch_to_bgm("login")
@@ -3488,9 +3489,20 @@ def hello():
 
 if __name__ == "__main__":
     hello()
+    # 存储管理器登录
     storage_manager.login()
+    # 剧情管理器初始化
+    plot_manager.load_session()
+    plot_manager.set_information_map({
+        "username": storage_manager.username,
+        "ship_name": storage_manager.get_value_of("ship_name")
+    })
+    plot_manager.try_to_play_when_login()
+    # 舰船读取终焉结
     my_ship.load_al()
+    # 词条管理器读取词条
     entry_manager.set_all_rank(storage_manager.get_entry_rank())
+    # 主循环
     while 1:
         main_loops.station_mainloop()
         current_destination = main_loops.ask_destination()
