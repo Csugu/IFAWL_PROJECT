@@ -1,7 +1,7 @@
 import socket
 import time
 
-from core.Module1_txt import Tree
+from core.Module1_txt import Tree, input_plus, print_plus
 
 HOST = "0.0.0.0"  # 本机
 PORT = 50000        # 任意未占用端口
@@ -14,7 +14,6 @@ class HeadTags:
     EXIT_TAG = "\tEXIT\t"
     ASK_TAG = "\tASK\t"
     TEST_TAG = "\tTEST\t"
-    TREE_TAG = "\tTREE\t"
     LONG_STR_TAG = "\tLONG\t"
 
 class Server:
@@ -60,12 +59,6 @@ class Server:
         )
         time.sleep(DELAY)
 
-    def send_tree(self,tree:Tree):
-        self.connection_socket.send(
-            (HeadTags.TREE_TAG+str(tree)).encode("utf-8")
-        )
-        time.sleep(DELAY)
-
     def ask(self,prompt:str) -> str:
         self.connection_socket.send(
             (HeadTags.ASK_TAG+prompt).encode("utf-8")
@@ -84,3 +77,52 @@ class Server:
 
     def send_exit(self,msg:str):
         self.connection_socket.send(HeadTags.EXIT_TAG.encode("utf-8")+msg.encode("utf-8"))
+
+class Client:
+
+    def __init__(self):
+        # 客户端socket对象生成
+        self.client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        # 会话socket对象生成
+        self.connection_socket:socket = None
+
+    def close(self):
+        self.client_socket.close()
+
+    def connect(self):
+        self.client_socket.connect((HOST, PORT))
+
+    def start_main_loop(self):
+        print_plus("主循环启动……正在接收服务器提问")
+        while 1:
+            prompt = self.client_socket.recv(BUFFER_SIZE).decode("utf-8")
+            parts = prompt.split("\t", 2)  # 最多分割成3部分
+            if len(parts) < 3:
+                continue
+            tag = "\t" + parts[1] + "\t"
+            content = parts[2]
+            match tag:
+                case HeadTags.STR_TAG:
+                    print_plus(content)
+                case HeadTags.LONG_STR_TAG:
+                    print(content)
+                case HeadTags.EXIT_TAG:
+                    print_plus(content)
+                    break
+                case HeadTags.ASK_TAG:
+                    answer = input_plus(content)
+                    self.client_socket.send(answer.encode("utf-8"))
+                case HeadTags.TEST_TAG:
+                    self.client_socket.send(b"test")
+                case _:
+                    pass
+        print_plus("主循环结束")
+        self.client_socket.close()
+
+
+if __name__ == "__main__":
+    client = Client()
+    client.connect()
+    client.start_main_loop()
+    client.close()
+    print("[客户端]客户端关闭")
