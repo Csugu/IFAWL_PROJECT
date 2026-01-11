@@ -3489,20 +3489,21 @@ class MainLoops:
             # noon
             if who == 1:
                 Txt.print_plus("今天由我方行动")
-                self.server.send_str("今天由我方行动\n请一号指挥官行动")
+                self.server.send_str("今天由我方行动")
                 field_printer.ppve_help_prompt()
                 if not self.is_near_death(my_ship):
-                    #Txt.print_plus("请一号指挥官行动")
                     field_printer.print_key_prompt(my_ship)
+                    self.server.send_str("正在等待长机指挥官操作<<<")
                     my_ship.react_for_ppve()
-                    #self.server.buffer_send()
+                    self.server.send_str("长机指挥官操作完毕>>>")
                 if not self.is_near_death(another_ship):
-                    #Txt.print_plus("请二号指挥官行动")
-                    #self.server.send_str("请二号指挥官行动")
+                    Txt.print_plus("正在等待僚机指挥官操作<<<")
                     field_printer.print_key_prompt(another_ship)
                     another_ship.react_for_ppve(self.server)
+                    Txt.print_plus("僚机指挥官操作完毕>>>")
             else:
                 Txt.print_plus("今天由敌方行动")
+                self.server.send_str("今天由敌方行动")
                 enemy.react()
 
             # afternoon
