@@ -6,7 +6,7 @@ from typing import Literal
 
 from core import Module1_txt as Txt
 from core.Module0_enums import DamageType, Modes, Side
-from core.Module14_communication import Server
+from core.Module14_communication import Server, Client
 from core.Module1_txt import input_plus
 from core.Module2_json_loader import json_loader
 from modules.Module3_storage_manager import storage_manager
@@ -3349,7 +3349,7 @@ class MainLoops:
                 input_plus("[enter]回站")
                 return
 
-    def initialize_before_ppve(self):
+    def initialize_before_ppve_server(self):
         # 服务器建立
         self.server = Server()
         entry_manager.set_server(self.server)
@@ -3384,6 +3384,8 @@ class MainLoops:
                 fast_choi = True
                 inp_position = 0
                 inp = "q"
+            else:
+                fclist = []
 
             match inp:
                 case "q"|"w"|"e":
@@ -3458,7 +3460,7 @@ class MainLoops:
         # 设置天数
         self.days = 1
             
-    def ppve_mainloop(self):
+    def ppve_server_mainloop(self):
         sounds_manager.switch_to_bgm("fight")
         while 1:
             # dawn
@@ -3529,6 +3531,12 @@ class MainLoops:
         entry_manager.clear_server()
         input_plus("[enter]回站")
         return
+
+    def ppve_client_mainloop(self):
+        client = Client()
+        client.connect()
+        client.start_main_loop()
+        client.close()
 
     @staticmethod
     def station_mainloop():
@@ -3679,15 +3687,22 @@ class MainLoops:
                 "在模拟器中与多波次敌人进行战斗",
                 "不启用仓库的终焉结",
                 "战斗结束后无奖励"
-            ).generate_line_list()+
+            ).generate_line_list(),
              Txt.Tree(
-                 "[3] 联合狩猎",
+                 "[3] 联合狩猎[长机]",
                  "在模拟器中与另一位指挥官合作打击敌方",
                  "不启用仓库的终焉结",
                  "战斗结束后无奖励"
-             ).generate_line_list()]
+             ).generate_line_list()+
+             Txt.Tree(
+                 "[4] 联合狩猎[僚机]",
+                 "在模拟器中与另一位指挥官合作打击敌方",
+                 "不启用仓库的终焉结",
+                 "战斗结束后无奖励"
+             ).generate_line_list()
+             ]
         )
-        des = Txt.ask_plus("请输入目的地>>>", ["0", "1", "2", "3",""])
+        des = Txt.ask_plus("请输入目的地>>>", ["0", "1", "2", "3", "4", ""])
         return des
 
 
@@ -3734,7 +3749,9 @@ if __name__ == "__main__":
                 main_loops.infinity_mainloop()
                 my_ship.load_al()
             case "3":
-                main_loops.initialize_before_ppve()
-                main_loops.ppve_mainloop()
+                main_loops.initialize_before_ppve_server()
+                main_loops.ppve_server_mainloop()
+            case "4":
+                main_loops.ppve_client_mainloop()
             case _:
                 pass
