@@ -32,6 +32,7 @@ class Voices:
         :param who: 语音发出者
         :param theme: 语音主题
         :param print_who: 是否打印语音发出者
+        :param server: 语音发送服务器
         :return:
         """
         try:
@@ -43,6 +44,7 @@ class Voices:
             Txt.print_plus(txt,should_wait=False)
         except KeyError:
             print(f"语音未定义-[{who}]{theme}")
+            server.send_str(f"语音未定义-[{who}]{theme}")
 
     def inject_and_report(self, who:str, theme:str, data_injected=None, print_who=True):
         """

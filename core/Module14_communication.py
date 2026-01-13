@@ -39,6 +39,8 @@ class Server:
         print("服务端启动，等待客户端连接...")
         # 阻塞 直到连接到手
         self.connection_socket, addr = self.server_socket.accept()
+        #self.server_socket.setblocking(False)
+        #self.connection_socket.setblocking(False)
         print(f"客户端已连接>{addr}")
 
     def test(self):
@@ -61,12 +63,14 @@ class Server:
         time.sleep(DELAY)
 
     def ask(self,prompt:str) -> str:
+        #self.connection_socket.setblocking(True)
         self.connection_socket.send(
             (HeadTags.ASK_TAG+prompt).encode("utf-8")
         )
         response = self.connection_socket.recv(BUFFER_SIZE).decode("utf-8")
         if response == HeadTags.NONE_TAG:
             response = ""
+        #self.connection_socket.setblocking(False)
         return response
     
     def buffer_append(self,msg:str):
