@@ -9,6 +9,8 @@ class Voices:
     def __init__(self):
         self.voices:dict[str,dict[str,list[str]]] = json_loader.load("voices")
 
+        self.server:Server|None = None
+
     def report(self, who:str, theme:str, print_who=True):
         """
         展示voices.json中记录的语音内容
@@ -23,8 +25,16 @@ class Voices:
             else:
                 txt = random.choice(self.voices[who][theme])
             Txt.print_plus(txt)
+            if self.server:
+                self.server.send_str(txt)
         except KeyError:
             print(f"语音未定义-[{who}]{theme}")
+
+    def set_server(self, server:Server):
+        self.server = server
+
+    def clear_server(self):
+        self.server = None
 
     def send_and_report(self, who:str, theme:str,server:Server,print_who=True):
         """

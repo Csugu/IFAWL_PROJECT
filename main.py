@@ -208,12 +208,12 @@ class MyShip:
                     my_ship.load(load)
                     another_ship.load(load)
                     self.load(-load*2)
-                    voices.send_and_report(self.platform,"弹药转移",main_loops.server)
+                    voices.report(self.platform,"弹药转移")
             case "s":
                     my_ship.heal(1)
                     another_ship.heal(1)
                     enemy.attack(2,self)
-                    voices.send_and_report("护盾","相互治疗",main_loops.server)
+                    voices.report("护盾","相互治疗")
             case "c":
                 if my_ship.life_for_ppve > 0:
                     enemy.attack(1-my_ship.shelter,self)
@@ -221,7 +221,7 @@ class MyShip:
                 if another_ship.life_for_ppve > 0:
                     enemy.attack(1-another_ship.shelter,self)
                     another_ship.shelter = 1
-                voices.send_and_report("护盾","救你一命！",main_loops.server)
+                voices.report("护盾","救你一命！")
         return "pass"
 
     def react(self):
@@ -727,7 +727,7 @@ class Al_general:
         :return: 无
         """
         if entry_manager.current_mode == Modes.PPVE:
-            voices.send_and_report(self.short_name, theme,main_loops.server)
+            voices.report(self.short_name, theme)
             return
         voices.report(self.short_name, theme)
 
@@ -3042,7 +3042,7 @@ class MainLoops:
             ship:MyShip
             if not self.is_near_death(ship) and ship.life_for_ppve > 0:
                 ship.life_for_ppve = -1
-                voices.send_and_report("战场播报","被救起",self.server)
+                voices.report("战场播报","被救起")
             elif self.is_near_death(ship):
                 if ship.life_for_ppve == -1:
                     return -1
@@ -3405,6 +3405,7 @@ class MainLoops:
         self.server = Server()
         entry_manager.set_server(self.server)
         self.server.connect()
+        voices.set_server(self.server)
         # 终焉结选择
         another_ship.al_list = [al15,al14,al19]
         fast_choi = False##员工通道
@@ -3430,6 +3431,7 @@ class MainLoops:
                 inp_position += 1
                 inp = "qwe "[inp_position]
             else:
+                Txt.print_plus("请等待僚机指挥官确认操作<<<")
                 inp = main_loops.server.ask("僚机指挥官请输入您的准备操作| [q/w/e]更换终焉结| [enter]进入战斗")
             if " " in inp and len(fclist := inp.split(" ")) == 3:
                 fast_choi = True
@@ -3523,16 +3525,17 @@ class MainLoops:
             for al in my_ship.al_list+another_ship.al_list:
                 if al:
                     al.operate_in_morning()
+
             field_printer.print_basic_info(self.days)
+            self.server.send_str(field_printer.generate_basic_info(self.days))
+
             entry_manager.print_all_selected_rank()
             field_printer.print_for_ppve(my_ship,another_ship,enemy)
             field_printer.print_suggestion_for_ppve()
-
-            #self.server.buffer_send()
-            self.server.send_str(field_printer.generate_basic_info(self.days))
-            self.server.send_long_str(entry_manager.generate_str_of_all_selected_rank())
-            self.server.send_long_str(field_printer.generate_for_ppve(my_ship,another_ship,enemy))
-            self.server.send_long_str(field_printer.generate_suggestion_for_ppve())
+            self.server.send_long_str(entry_manager.generate_str_of_all_selected_rank()+
+                field_printer.generate_for_ppve(my_ship,another_ship,enemy)+
+                field_printer.generate_suggestion_for_ppve()
+            )
 
             # noon
             if who == 1:
@@ -3582,6 +3585,7 @@ class MainLoops:
         self.server.send_exit("作战已结束")
         self.server.close()
         self.server = None
+        voices.clear_server()
         entry_manager.clear_server()
         input_plus("[enter]回站")
         return
@@ -3603,7 +3607,7 @@ class MainLoops:
             match go_to:
                 case "z":
                     storage_manager.print_storage()
-                case "x":
+                case "x" | "p1":
                     if storage_manager.have_all_al_on_ship(my_ship.al_list):
                         break
                     else:
