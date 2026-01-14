@@ -370,7 +370,7 @@ class EnemyShip:
         if blind:
             print("[No Info]")
             return
-        if al33.is_on_ones_ship():
+        if al33.is_on_one_ship():
             al33.print_poisoned_shelter()
             return
         for _ in range(self.shelter):
@@ -536,7 +536,7 @@ class Al_manager:
                 Txt.print_plus(f"{self.al_meta_data[inp]['short_name']}#{self.al_meta_data[inp]['index']} 已确认装备")
                 my_ship.al_list[al_position] = self.all_al_list[inp]
                 print("")
-                if not self.check_if_kick_e() or type_choosing == "q":
+                if not self.check_and_kick_e() or type_choosing == "q":
                     time.sleep(0.4)
                     break
         storage_manager.save_al_on_ship(my_ship.al_list)
@@ -571,7 +571,7 @@ class Al_manager:
         Txt.print_plus(f"{self.al_meta_data[inp]['short_name']}#{self.al_meta_data[inp]['index']} 已确认装备")
         my_ship.al_list[al_position] = self.all_al_list[inp]
         print()
-        self.check_if_kick_e()
+        self.check_and_kick_e()
         my_ship.update_platform()
         my_ship.update_total_al_rank()
 
@@ -670,7 +670,11 @@ class Al_manager:
         return out
 
     @staticmethod
-    def check_if_kick_e() -> bool:
+    def check_and_kick_e() -> bool:
+        """
+        检查主武器和战术区终焉结是否匹配，若不匹配则踢出e区终焉结
+        :return: 是否踢出e区终焉结
+        """
         q = my_ship.al_list[0]
         e = my_ship.al_list[2]
         if not q or not e:
@@ -688,6 +692,10 @@ class Al_manager:
         return False
 
     def initialize_all_al(self):
+        """
+        调用所有终焉结的初始化函数
+        :return: 无
+        """
         for al in self.all_al_list.values():
             al.initialize()
 
@@ -760,7 +768,7 @@ class Al_general:
         # [30] 岩河军工“湾区铃兰”饱和式蜂巢突击粒子炮      [粒子炮平台] [VIII] 1在仓库 >>[可以离站使用]<<
         print()
 
-    def is_on_ones_ship(self) -> bool:
+    def is_on_one_ship(self) -> bool:
         """
         判断自己是否在任意一艘我方舰船上
         :return: 是否在任意一艘我方舰船上
@@ -1194,7 +1202,7 @@ class Al12(Al_general):  # 晴空
         self.atk_list: list[int] = [0, 0, 1, 2, 4, 5, 7, 8]
 
     def adjust_operation(self, raw: str) -> str:
-        if self.state != 0 and raw != "q" and not (al16.is_on_ones_ship() and raw in ["w", "2"]):
+        if self.state != 0 and raw != "q" and not (al16.is_on_one_ship() and raw in ["w", "2"]):
             self.attack()
         return raw
 
@@ -1441,7 +1449,7 @@ al17 = Al17(17)
 class Al18(Al_general):  # 初夏
 
     def adjust_operation(self, raw: str) -> str:
-        if self.is_on_ones_ship() and raw == "2":
+        if self.is_on_one_ship() and raw == "2":
             return "w"
         return raw
 
@@ -1525,7 +1533,7 @@ class Al21(Al_general):  # 诗岸
             self.report("充注")
 
     def adjust_operation(self, raw: str) -> str:
-        if self.is_on_ones_ship() and raw == "2":
+        if self.is_on_one_ship() and raw == "2":
             self.heal()
             return "pass"
         return raw
@@ -1549,7 +1557,7 @@ class Al21(Al_general):  # 诗岸
 
     def print_self_behind_shelter(self,return_list = False):
         print_list = []
-        if self.is_on_ones_ship():
+        if self.is_on_one_ship():
             if return_list:
                 if self.state <= 6:
                     print_list += ["/-/-/-/"]*self.state
@@ -1715,7 +1723,7 @@ class Al25(Al_general):  # 阿贾克斯
     def print_self(self):
         if self.state < 0:
             print(self.skin_list[4])
-        elif self.is_on_ones_ship():
+        elif self.is_on_one_ship():
             print(self.skin_list[self.state])
 
     def suggest(self):
@@ -1785,7 +1793,7 @@ class Al27(Al_general):  # 瞳猫
             self.report("充能")
 
     def operate_in_morning(self):
-        if self.is_on_ones_ship() and dice.current_who == Side.PLAYER and self.state < 9:
+        if self.is_on_one_ship() and dice.current_who == Side.PLAYER and self.state < 9:
             self.state += 1
 
     def add_atk(self, atk, type):
@@ -1793,14 +1801,14 @@ class Al27(Al_general):  # 瞳猫
         瞳猫只是一只小猫，他不会对你的攻击造成加成
         只是我需要写在这里方便在atk时调用罢了
         """
-        if self.is_on_ones_ship() and self.state > 0:
+        if self.is_on_one_ship() and self.state > 0:
             self.state = 0
             self.report("层数清空")
             return int(atk*1.5)
         return atk
 
     def reduce_enemy_attack(self, atk):
-        if self.is_on_ones_ship() and atk > 0:
+        if self.is_on_one_ship() and atk > 0:
             if dice.probability(self.state * 0.1 - (self.ship.get_equivalent_shelter_of_ship() - 1) * 0.12):
                 atk = 0
                 self.report("喵")
@@ -1916,14 +1924,14 @@ class Al29(Al_general):  # 酒师
             self.state = [x for x in self.state if x != 0]
 
     def print_self(self):
-        if self.is_on_ones_ship():
+        if self.is_on_one_ship():
             for i in self.state:
                 print(self.skin_list[i], end=" ")
             print()
 
     def generate_line_list(self):
         print_list = []
-        if self.is_on_ones_ship():
+        if self.is_on_one_ship():
             str = ""
             for i in self.state:
                 str += self.skin_list[i]
@@ -2071,7 +2079,7 @@ class Al33(Al_general):  # 蛊
                 self.state[i] = 0
 
     def check_if_move(self, times):
-        if self.is_on_ones_ship:
+        if self.is_on_one_ship:
             for i in range(times):
                 self.state = self.state[1:]
                 self.state.append(0)
@@ -2139,7 +2147,7 @@ class Al34(Al_general):  # 风间浦
             self.report("激进模式启动")
 
     def add_hp(self, hp):
-        if not self.is_on_ones_ship():
+        if not self.is_on_one_ship():
             return hp
         if self.state[0] == 0 and dice.probability(0.5):
             self.report("保守模式治疗加成")
@@ -2212,7 +2220,7 @@ class Al35(Al_general):  # 青鹄
                 self.report("装弹")
 
     def operate_in_morning(self):
-        if self.is_on_ones_ship():
+        if self.is_on_one_ship():
             self.state += 1
         if self.state >= 4 and dice.current_who == Side.ENEMY:
             my_ship.heal(1)
@@ -2264,7 +2272,7 @@ al35 = Al35(35)
 class Al36(Al_general):  # 西岭
 
     def reduce_enemy_attack(self, atk):
-        if not self.is_on_ones_ship() or self.state == 1:
+        if not self.is_on_one_ship() or self.state == 1:
             return atk
         if dice.probability(0.5):
             self.report("拦截成功")
@@ -2366,7 +2374,7 @@ class Al37(Al_general): # 星尘
     def operate_in_afternoon(self):
         if self.state < 0:
             self.state += 1
-        if self.is_on_ones_ship() and enemy.shelter < -1:
+        if self.is_on_one_ship() and enemy.shelter < -1:
             my_ship.load(int((-1-enemy.shelter)*0.5))
             enemy.shelter=-1
             self.report("能量回收")
@@ -2396,7 +2404,7 @@ class Al38(Al_general):  # 澈
         """
         其实并不会reduce
         """
-        if self.is_on_ones_ship() and self.state[1] == False and dice.probability(0.5):
+        if self.is_on_one_ship() and self.state[1] == False and dice.probability(0.5):
             self.state[0] += 1
             self.report("收到")
 
@@ -2418,7 +2426,7 @@ class Al38(Al_general):  # 澈
             self.report("激进模式关闭")
 
     def add_atk(self, atk, type):
-        if self.state[1] == False and self.is_on_ones_ship() and dice.probability(0.5):
+        if self.state[1] == False and self.is_on_one_ship() and dice.probability(0.5):
             self.state[0] += 1
             self.report("收到")
         if self.state[1] and self.state[0] > 0:

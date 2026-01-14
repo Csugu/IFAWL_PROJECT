@@ -26,5 +26,12 @@ class Side:
     PLAYER = 1  # 玩家方
     ENEMY = 0   # 敌方
 
+class AlStateIndex:
+    """Al state列表索引枚举"""
+    STRUCTURE = 0
+    WORKING = 1
+    COOLING = 2
+    OTHER = 3
+
 class IFAWL_ConnectionCancel(Exception):
     pass
