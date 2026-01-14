@@ -2242,12 +2242,12 @@ class Al34(Al_general):  # 风间浦
                  self.ship.shelter = 1
                  self.report("激进模式保护")
         elif self.state[ASI.WORKING] == 1: # 脱离激进模式瞬间
+            if self.state[ASI.BUILDING] != 0:
+                self.ship.heal(self.state[ASI.BUILDING])
             self.state[ASI.WORKING] = 0
             self.state[ASI.BUILDING] = 0
             self.state[ASI.COOLING] = -6
             self.report("安全港就位")
-            if self.state[ASI.BUILDING] != 0:
-                self.ship.heal(self.state[ASI.BUILDING])
 
         if self.state[ASI.WORKING] > 0 and dice.current_who == Side.ENEMY:
             self.state[ASI.WORKING] -= 1
@@ -2268,7 +2268,7 @@ class Al34(Al_general):  # 风间浦
         if self.state[ASI.WORKING] > 0:
             return f"[激进模式]剩余{self.state[ASI.WORKING]}天|{self.state[ASI.BUILDING]}伤害计入"
         elif self.state[ASI.WORKING] == 1:
-            return f"[脱离激进模式]{self.state[1]}护盾即将回充"
+            return f"[脱离激进模式]{self.state[ASI.BUILDING]}护盾即将回充"
         elif self.state[ASI.COOLING] < 0:
             return f"[充能中]剩余{-self.state[ASI.COOLING]}天|[2]回盾加成中"
         else:
@@ -2475,11 +2475,8 @@ al37 = Al37(37)
 
 class Al38(Al_general):  # 澈
 
-    def initialize(self):
-        self.state = [0, False]
-
     def react(self):
-        self.state[0] += 3
+        self.state[ASI.LOGGING] += 3
         self.report("获得锋镝")
         enemy.attack(1,self.ship)  # todo:禁用烈风
         enemy.attack(1,self.ship)
@@ -2488,56 +2485,56 @@ class Al38(Al_general):  # 澈
         """
         其实并不会reduce
         """
-        if self.is_on_one_ship() and self.state[1] == False and dice.probability(0.5):
-            self.state[0] += 1
+        if self.is_on_one_ship() and self.state[ASI.OTHER] == False and dice.probability(0.5):
+            self.state[ASI.LOGGING] += 1
             self.report("收到")
 
         return atk
 
     def operate_in_afternoon(self):
-        if self.state[0] > 0 and self.ship.shelter < 1:
-            cure = min(self.state[0], 2 - self.ship.shelter)
-            self.state[0] -= cure
+        if self.state[ASI.LOGGING] > 0 and self.ship.shelter < 1:
+            cure = min(self.state[ASI.LOGGING], 2 - self.ship.shelter)
+            self.state[ASI.LOGGING] -= cure
             self.ship.heal(cure)
             self.report("护盾补充")
 
     def operate_in_morning(self):
-        if self.state[0] > 9 and self.state[1] == False:
-            self.state[1] = True
+        if self.state[ASI.LOGGING] > 9 and self.state[ASI.OTHER] == False:
+            self.state[ASI.OTHER] = True
             self.report("激进模式开启")
-        elif self.state[0] < 5 and self.state[1] == True:
-            self.state[1] = False
+        elif self.state[ASI.LOGGING] < 5 and self.state[ASI.OTHER] == True:
+            self.state[ASI.OTHER] = False
             self.report("激进模式关闭")
 
     def add_atk(self, atk, type):
-        if self.state[1] == False and self.is_on_one_ship() and dice.probability(0.5):
-            self.state[0] += 1
+        if self.state[ASI.OTHER] == False and self.is_on_one_ship() and dice.probability(0.5):
+            self.state[ASI.LOGGING] += 1
             self.report("收到")
-        if self.state[1] and self.state[0] > 0:
-            self.state[0] -= 1
+        if self.state[ASI.OTHER] and self.state[ASI.LOGGING] > 0:
+            self.state[ASI.LOGGING] -= 1
             self.report("牺牲加成")
             return atk + 1
         return atk
 
     def print_self(self):
-        if self.state[0] <= 5:
-            print("--X--\n" * self.state[0])
+        if self.state[ASI.LOGGING] <= 5:
+            print("--X--\n" * self.state[ASI.LOGGING])
         else:
-            print(f"--X-- x{self.state[0]}")
+            print(f"--X-- x{self.state[ASI.LOGGING]}")
 
     def generate_line_list(self):
         print_list = []
-        if self.state[0] <= 5:
-            print_list += ["--X--"] * self.state[0]
+        if self.state[ASI.LOGGING] <= 5:
+            print_list += ["--X--"] * self.state[ASI.LOGGING]
         else:
-            print_list.append(f"--X-- x{self.state[0]}")
+            print_list.append(f"--X-- x{self.state[ASI.LOGGING]}")
         return print_list
 
     def suggest(self):
-        if self.state[1]:
-            return f"[w]自伤并获得三点锋镝|[寂]伤害加成中|[锋镝]>{self.state[0]}"
+        if self.state[ASI.OTHER]:
+            return f"[w]自伤并获得三点锋镝|[寂]伤害加成中|[锋镝]>{self.state[ASI.LOGGING]}"
         else:
-            return f"[w]自伤并获得三点锋镝|[澄]敌我攻击概率获得锋镝|[锋镝]>{self.state[0]}"
+            return f"[w]自伤并获得三点锋镝|[澄]敌我攻击概率获得锋镝|[锋镝]>{self.state[ASI.LOGGING]}"
 
 
 al38 = Al38(38)
