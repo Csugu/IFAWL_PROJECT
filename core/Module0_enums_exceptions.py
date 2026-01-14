@@ -29,7 +29,7 @@ class Side:
 class ASI:
     """Al state列表索引枚举"""
     OTHER = 0
-    STRUCTURE = 1
+    BUILDING = 1
     WORKING = 2
     LOGGING = 3
     COOLING = 4
