@@ -2212,6 +2212,10 @@ class Al34(Al_general):  # 风间浦
         if not self.is_on_one_ship():
             return hp
         if self.state[ASI.WORKING] == 0 and self.state[ASI.COOLING] == 0:
+            if dice.probability(0.7) or self.ship.shelter == 0:
+                self.report("保守模式治疗加成")
+                return hp + 1
+        if self.state[ASI.COOLING] < 0:
             if dice.probability(0.5) or self.ship.shelter == 0:
                 self.report("保守模式治疗加成")
                 return hp + 1
@@ -2239,11 +2243,11 @@ class Al34(Al_general):  # 风间浦
                  self.report("激进模式保护")
         elif self.state[ASI.WORKING] == 1: # 脱离激进模式瞬间
             self.state[ASI.WORKING] = 0
-            self.state[ASI.LOGGING] = 0
+            self.state[ASI.BUILDING] = 0
             self.state[ASI.COOLING] = -6
             self.report("安全港就位")
-            if self.state[ASI.LOGGING] != 0:
-                self.ship.heal(self.state[ASI.LOGGING])
+            if self.state[ASI.BUILDING] != 0:
+                self.ship.heal(self.state[ASI.BUILDING])
 
         if self.state[ASI.WORKING] > 0 and dice.current_who == Side.ENEMY:
             self.state[ASI.WORKING] -= 1
@@ -2256,17 +2260,17 @@ class Al34(Al_general):  # 风间浦
 #            self.inject_and_report("记录伤害", {"atk": atk})
 #        return atk
         if self.state[ASI.WORKING] > 0 and atk > 0:
-            self.state[ASI.LOGGING] += atk
+            self.state[ASI.BUILDING] += atk
             self.inject_and_report("记录伤害", {"atk": atk})
         return atk
 
     def suggest(self):
         if self.state[ASI.WORKING] > 0:
-            return f"[激进模式]剩余{self.state[ASI.WORKING]}天|{self.state[ASI.LOGGING]}伤害计入"
+            return f"[激进模式]剩余{self.state[ASI.WORKING]}天|{self.state[ASI.BUILDING]}伤害计入"
         elif self.state[ASI.WORKING] == 1:
             return f"[脱离激进模式]{self.state[1]}护盾即将回充"
         elif self.state[ASI.COOLING] < 0:
-            return f"[充能中]剩余{-self.state[ASI.COOLING]}天"
+            return f"[充能中]剩余{-self.state[ASI.COOLING]}天|[2]回盾加成中"
         else:
             return "[w]进入激进模式|[保守模式]>[2]回盾加成中"
 
@@ -2281,14 +2285,14 @@ class Al35(Al_general):  # 青鹄
 
     def react(self):
         main_loops.days -= 1
-        if self.state < 4:
-            self.state += 2
+        if self.state[ASI.LOGGING] < 4:
+            self.state[ASI.LOGGING] += 2
             self.report("充能")
         else:
             if my_ship.missile > 1:
                 my_ship.load(-2)
                 my_ship.attack(2, DamageType.ORDINARY_ATTACK)
-                self.state = 0
+                self.state[ASI.LOGGING] = 0
                 self.report("攻击")
             else:
                 my_ship.load(1)
@@ -2298,8 +2302,8 @@ class Al35(Al_general):  # 青鹄
 
     def operate_in_morning(self):
         if self.is_on_one_ship():
-            self.state += 1
-        if self.state >= 4 and dice.current_who == Side.ENEMY:
+            self.state[ASI.LOGGING] += 1
+        if self.state[ASI.LOGGING] >= 4 and dice.current_who == Side.ENEMY:
             my_ship.heal(1)
             my_ship.load(1)
             self.report("准备")
@@ -2309,7 +2313,7 @@ class Al35(Al_general):  # 青鹄
         if not self.is_on_one_ship():
             return
 
-        if self.state >= 4 and dice.current_who == Side.ENEMY:
+        if self.state[ASI.LOGGING] >= 4 and dice.current_who == Side.ENEMY:
             suggestion_tree = field_printer.generate_suggestion_tree(self.ship)
             suggestion_tree.topic = "额外回合操作"
             suggestion_tree.print_self()
@@ -2317,15 +2321,15 @@ class Al35(Al_general):  # 青鹄
             d = "qwe".find(inp)
             al_temp: Al_general = self.ship.al_list[d]
             if al_temp:
-                if type(al_temp.state) == int and al_temp.state < 0:
-                    al_temp.state = 0
+                if al_temp.state[ASI.LOGGING] < 0:
+                    al_temp.state[ASI.LOGGING] = 0
                     self.report_plus(inp, 1)
                     Txt.print_plus(f"[{al_temp.type}] {al_temp.short_name}#{al_temp.index}冷却已重置")
                 else:
                     self.report_plus(inp, 0)
                     al_temp.react()
-            if self.state != 0:
-                self.state -= 4
+            if self.state[ASI.LOGGING] != 0:
+                self.state[ASI.LOGGING] -= 4
 
     def report_plus(self, type, num):
         txt = self.voi_list[type][num]
@@ -2336,14 +2340,14 @@ class Al35(Al_general):  # 青鹄
             Txt.print_plus(txt)
 
     def suggest(self):
-        if self.state < 1:
-            return f"[e]增加二层充能|充能层数{self.state}/4"
-        elif self.state < 4:
-            return f"[e]增加二层充能并进入待命状态|充能层数{self.state}/4"
+        if self.state[ASI.LOGGING] < 1:
+            return f"[e]增加二层充能|充能层数{self.state[ASI.LOGGING]}/4"
+        elif self.state[ASI.LOGGING] < 4:
+            return f"[e]增加二层充能并进入待命状态|充能层数{self.state[ASI.LOGGING]}/4"
         elif self.ship.missile > 1:
-            return f"[e]攻击对方并清空充能|[待命中]获得额外回合|充能层数{self.state}/4"
+            return f"[e]攻击对方并清空充能|[待命中]获得额外回合|充能层数{self.state[ASI.LOGGING]}/4"
         else:
-            return f"[e]装弹|[待命中]获得额外回合|充能层数{self.state}/4"
+            return f"[e]装弹|[待命中]获得额外回合|充能层数{self.state[ASI.LOGGING]}/4"
 
 
 al35 = Al35(35)
@@ -2352,7 +2356,7 @@ al35 = Al35(35)
 class Al36(Al_general):  # 西岭
 
     def reduce_enemy_attack(self, atk):
-        if not self.is_on_one_ship() or self.state == 1:
+        if not self.is_on_one_ship() or self.state[ASI.LOGGING] == 1:
             return atk
         if dice.probability(0.5):
             self.report("拦截成功")
@@ -2362,13 +2366,13 @@ class Al36(Al_general):  # 西岭
             return atk
 
     def react(self):
-        if self.state == 0:
-            self.state = 1
+        if self.state[ASI.LOGGING] == 0:
+            self.state[ASI.LOGGING] = 1
         else:
-            self.state = 0
+            self.state[ASI.LOGGING] = 0
 
     def operate_in_afternoon(self):
-        if self.state == 1 and dice.current_who == Side.PLAYER:
+        if self.state[ASI.LOGGING] == 1 and dice.current_who == Side.PLAYER:
             if_auto = False
             count_shot = 40
             while count_shot > 0:
@@ -2396,7 +2400,7 @@ class Al36(Al_general):  # 西岭
         time.sleep(0.4)
 
     def suggest(self):
-        if self.state == 0:
+        if self.state[ASI.LOGGING] == 0:
             return "[自动防空]导弹拦截中|[e]切换至饱和式弹雨扫射模式"
         else:
             return "[弹雨启动]每日攻击就位|[e]切换回自动防御模式"
@@ -2408,7 +2412,7 @@ al36 = Al36(36)
 class Al37(Al_general): # 星尘
 
     def react(self):
-        if self.state < 0:
+        if self.state[ASI.COOLING] < 0:
             self.report("冷却中")
             return
         try:
@@ -2431,7 +2435,7 @@ class Al37(Al_general): # 星尘
 
         if e - 4 <= pos <= e + 4:
             print("x")
-            self.state = -7
+            self.state[ASI.COOLING] = -7
             if e - 2 <= pos <= e + 2:
                 print(" " * (e - 10) + r"\\\\   [星尘]   ////")
                 print(" " * (e - 10) + r"   \\\\FIRE!!////")
@@ -2439,7 +2443,7 @@ class Al37(Al_general): # 星尘
             else:
                 print(" " * (e - 10) + r"\\ [星尘]SPLASH!! //")
                 damage = min(4, self.ship.missile)
-                self.state = -4
+                self.state[ASI.COOLING] = -4
             self.report("锁定成功")
             self.ship.attack(int(damage * 1.5), DamageType.PARTICLE_CANNON_SHOOTING)
             #p_c_manager.boom_now()
@@ -2452,16 +2456,16 @@ class Al37(Al_general): # 星尘
             self.report("锁定未成功")
 
     def operate_in_afternoon(self):
-        if self.state < 0:
-            self.state += 1
+        if self.state[ASI.COOLING] < 0:
+            self.state[ASI.COOLING] += 1
         if self.is_on_one_ship() and enemy.shelter < -1:
             my_ship.load(int((-1-enemy.shelter)*0.5))
             enemy.shelter=-1
             self.report("能量回收")
 
     def suggest(self):
-        if self.state < 0:
-            return f"[冷却中]剩余{-self.state}天"
+        if self.state[ASI.COOLING] < 0:
+            return f"[冷却中]剩余{-self.state[ASI.COOLING]}天"
         else:
             return "[q]启动狙击粒子炮|注意-含有qte"
 
