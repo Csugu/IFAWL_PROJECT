@@ -114,6 +114,8 @@ class Client:
                 print_plus(f"网络错误: {str(e)}")
             except IFAWL_ConnectionCancel:
                 raise
+            else:
+                break
 
 
     def start_main_loop(self):
