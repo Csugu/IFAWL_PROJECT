@@ -2665,26 +2665,30 @@ class Al40(Al_general):  # 冷水
 al40 = Al40(40)
 
 class Al41(Al_general): # 暮离
+    """
+    暮离的state转移过程是：
+    COOLING: 0->-3->-2->-1->0
+    """
 
     def react(self):
-        if self.state == 0:
-            if self.ship.missile>0:
+        if self.state[ASI.COOLING] == 0:
+            if self.ship.missile > 0:
                 self.ship.load(-1)
                 self.ship.heal(3)
                 self.report("耗弹治疗")
             else:
                 self.ship.load(2)
-            self.state = -3
+            self.state[ASI.COOLING] = -3
 
     def operate_in_afternoon(self):
-        if self.state >= -3 and self.ship.shelter <= 0:
+        if self.state[ASI.COOLING] >= -3 and self.ship.shelter <= 0:
             if self.ship.missile > 0:
                 self.ship.load(-1)
-            self.state = -6
+            self.state[ASI.COOLING] = -6
             self.ship.shelter = 3
             self.report("急救")
-        if self.state < 0:
-            self.state += 1
+        if self.state[ASI.COOLING] < 0:
+            self.state[ASI.COOLING] += 1
     
     def reduce_enemy_attack(self, atk):
         if atk > 1:
@@ -2693,20 +2697,19 @@ class Al41(Al_general): # 暮离
         return atk
     
     def suggest(self):
-        if self.state == 0 and self.ship.missile > 0:
+        if self.state[ASI.COOLING] == 0 and self.ship.missile > 0:
             return "[w]消耗弹药回复三点护盾"
-        elif self.state == 0 and self.ship.missile == 0:
+        elif self.state[ASI.COOLING] == 0 and self.ship.missile == 0:
             return "[w]回复两点弹药"
-        elif  -3 <= self.state < 0:
-            return f"[急救激活中]扣除一弹药（若有）并强行把护盾抬至三点|[主动冷却中]剩余{-self.state}天"
+        elif -3 <= self.state[ASI.COOLING] < 0:
+            return f"[急救激活中]扣除一弹药（若有）并强行把护盾抬至三点|[主动冷却中]剩余{-self.state[ASI.COOLING]}天"
         else:
-            return f"[急救冷却中]剩余{-3-self.state}天|[主动冷却中]剩余{-self.state}天"
+            return f"[急救冷却中]剩余{-3-self.state[ASI.COOLING]}天|[主动冷却中]剩余{-self.state[ASI.COOLING]}天"
 
 al41=Al41(41)
                 
 
 class Al42(Al_general): # 百里香
-    """百里香的state为奇数时代表充能，否则为攻击"""
 
     def react(self):
 #        if self.state == 0:
