@@ -21,7 +21,7 @@ from modules.Module11_damage_previewer import damage_previewer
 from modules.Module12_infinity_card_manager import CardManager
 from modules.Module13_plot_manager import plot_manager
 
-__VERSION__ = "IFAWL 1.2.0 'STARDUST INFINITY'"
+__VERSION__ = "IFAWL 1.3.0 'UNITED in DEATH'"
 
 
 
@@ -832,26 +832,10 @@ class Al_general:
         return 0
 
     def print_self(self):
-        if self.state != 0:
-            try:
-                print(self.skin_list[self.state])
-                print()
-            except IndexError:
-                pass
-            except TypeError:
-                pass
+        pass
 
     def generate_line_list(self):
-        print_list = []
-        if self.state != 0:
-            try:
-                print_list.append(self.skin_list[self.state])
-                print_list.append("")
-            except TypeError:
-                pass
-            except IndexError:
-                pass
-        return print_list
+        pass
 
     def print_self_behind_shelter(self,return_list = False):
         if return_list:
@@ -991,10 +975,8 @@ class Al4(Al_general):  # 咆哮
                 self.report("回流")
 
     def suggest(self) -> str | None:
-        if self.state[ASI.BUILDING] == 0:
+        if self.state[ASI.BUILDING] == 0 and self.state[ASI.WORKING] == 0:
             return "[q]部署发射台"
-        elif self.state[ASI.BUILDING] == 1:
-            return "[q]挂载铜芯导弹 2/2"
         elif self.state[ASI.WORKING] > 0:
             return "[自动攻击中]回流系统正在生效"
         else:
@@ -2182,11 +2164,6 @@ al33 = Al33(33)
 
 class Al34(Al_general):  # 风间浦
 
-    state = [0, 0]
-
-    def initialize(self):
-        self.state = [0, 0]
-
     def react(self):
 #        if self.state[0] == 0:
 #            self.state[0] = 9
@@ -2237,7 +2214,7 @@ class Al34(Al_general):  # 风间浦
 #            self.state[0] -= 1
 #        elif 0 < self.state[0] <= BEGIN_COOLING and dice.current_who == Side.PLAYER:
 #            self.state[0] -= 1
-        if self.state[ASI.WORKING] > 0: # 激进模式下
+        if self.state[ASI.WORKING] > 1: # 激进模式下
              if self.ship.shelter <= 0:
                  self.ship.shelter = 1
                  self.report("激进模式保护")
@@ -2251,10 +2228,10 @@ class Al34(Al_general):  # 风间浦
 
         if self.state[ASI.WORKING] > 0 and dice.current_who == Side.ENEMY:
             self.state[ASI.WORKING] -= 1
-        if self.state[ASI.COOLING] < 0:
+        if self.state[ASI.COOLING] < 0 and dice.current_who == Side.PLAYER:
             self.state[ASI.COOLING] += 1
 
-    def reduce_enemy_attack(self, atk):  #实则不然
+    def reduce_enemy_attack(self, atk): # 实则不然
 #        if self.state[0] > 5 and atk > 0:
 #            self.state[1] += atk
 #            self.inject_and_report("记录伤害", {"atk": atk})
