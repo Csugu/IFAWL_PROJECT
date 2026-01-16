@@ -3830,7 +3830,7 @@ class MainLoops:
             "[0] 基本对战",
             "[1] 战死之地",
             "[2] 无尽模式",
-            "[3] 联合狩猎",
+            "[3/4] 联合狩猎",
             "[enter] 回站"
         ).print_self()
         Txt.n_column_print(
