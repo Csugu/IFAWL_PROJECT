@@ -2751,11 +2751,12 @@ class Al42(Al_general): # 百里香
             return "[q]启动"
 
 al42=Al42(42)
-                
+
 
 class FieldPrinter:
 
-    def print_for_fight(self, me: MyShip, opposite: EnemyShip):
+    @staticmethod
+    def print_for_fight(me: MyShip, opposite: EnemyShip):
         """
         打印fight模式下双方护盾和导弹，以及我方Al
         :param me:
@@ -2789,7 +2790,8 @@ class FieldPrinter:
         print()
         damage_previewer.update(me.shelter, opposite.shelter)
 
-    def print_for_ppve(self, me: MyShip,another:MyShip ,opposite: EnemyShip):
+    @staticmethod
+    def print_for_ppve(me: MyShip, another:MyShip, opposite: EnemyShip):
         opposite.print_self_missile(entry_manager.get_rank_of("2") >= 1)
         print()
         opposite.print_self_shelter()
@@ -2852,7 +2854,8 @@ class FieldPrinter:
         Txt.n_column_print([left,right])
         damage_previewer.update(me.shelter, opposite.shelter)
 
-    def generate_for_ppve(self, me: MyShip,another:MyShip ,opposite: EnemyShip):
+    @staticmethod
+    def generate_for_ppve(me: MyShip, another:MyShip, opposite: EnemyShip):
         out = ""
         out += opposite.generate_self_missile(entry_manager.get_rank_of("2") >= 1)
         out += "\n"
@@ -2916,7 +2919,8 @@ class FieldPrinter:
         out += Txt.n_column_generate([left,right])
         return out
 
-    def print_basic_info(self, days):
+    @staticmethod
+    def print_basic_info(days):
         """
         打印战场基本信息
         :param days: 当前天数
@@ -2934,7 +2938,8 @@ class FieldPrinter:
             Txt.print_plus("当前舰船位置>>敌方腹地危险区域")
         print()
 
-    def generate_basic_info(self, days) -> str:
+    @staticmethod
+    def generate_basic_info(days) -> str:
         out = "~~~~~~~~~~~~~~~~~~~~~~~~\n"
         out += f"指挥官，今天是战线展开的第{days}天。\n"
         if days < 5:
@@ -2948,7 +2953,8 @@ class FieldPrinter:
         out += "\n"
         return out
 
-    def generate_suggestion_tree(self,ship = my_ship):
+    @staticmethod
+    def generate_suggestion_tree(ship = my_ship):
         suggestion_list = []
         for al in ship.al_list:
             try:
@@ -2961,7 +2967,7 @@ class FieldPrinter:
         if not suggestion_list:
             suggestion_list.append("空闲")
         return Txt.Tree("战斗辅助面板", suggestion_list)
-    
+
     def print_suggestion_for_ppve(self):
         Txt.n_column_print(
             [self.generate_suggestion_tree(my_ship).generate_line_list(),
@@ -2973,13 +2979,15 @@ class FieldPrinter:
              self.generate_suggestion_tree(another_ship).generate_line_list()]
         )
 
-    def ppve_help_prompt(self):
+    @staticmethod
+    def ppve_help_prompt():
         prompt = "[m1~m9]转移1~9枚弹药 [s]转移一层护盾 [c]救援"
         main_loops.server.send_str(prompt)
         print(prompt)
 
 
-    def print_key_prompt(self,ship = my_ship):
+    @staticmethod
+    def print_key_prompt(ship = my_ship):
         key_prompt = "[0/space] 装弹  [1] 发射  [2] 上盾  "
         for al in ship.al_list:
             try:
