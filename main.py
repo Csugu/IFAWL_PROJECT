@@ -2452,6 +2452,13 @@ al37 = Al37(37)
 
 class Al38(Al_general):  # 澈
 
+    def __init__(self,index):
+        super().__init__(index)
+        self.state = [False,0,0,0,0]
+
+    def initialize(self):
+        self.state = [False,0,0,0,0]
+
     def react(self):
         self.state[ASI.LOGGING] += 3
         self.report("获得锋镝")
