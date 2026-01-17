@@ -1,7 +1,8 @@
 from __future__ import annotations
+
+import random
 import time
 from typing import Literal
-from core.Module10_sound_manager import sounds_manager
 
 def get_shell_len(txt: str) -> int:
     """
@@ -37,6 +38,7 @@ def print_plus(txt:str, sec:float=0.3,should_wait:bool=True):
     增强视觉print函数
     :param txt: 文本
     :param sec: 打印总时长
+    :param should_wait: 是否在打印后等待0.2秒
     :return:
     """
     i=len(txt)
@@ -265,13 +267,45 @@ def dict_give_and_get_print(father: dict, get: dict, give: dict):
             print_main(1)
     print()
 
-def ask_plus(txt:str,kword:list):
-    kword_str = kword.copy()
-    kword_str = [str(j) for j in kword]
+def ask_plus(txt:str,key_words:list):
+    key_words_str = [str(j) for j in key_words]
     while 1:
         inp=input_plus(txt)
-        if inp in kword_str:
+        if inp in key_words_str:
             break
         else:
             print("请在可选范围内输入")
     return  inp
+
+def qte(who:str, perfect_txt="!FIRE!", good_txt="SPLASH!!", run_delta_t=0.03):
+    try:
+        input_plus(f"[{who}]确认后使用[ctrl+C]锁定目标（请勿多次敲击或长按）|[ctrl+C]确认>>>")
+    except KeyboardInterrupt:
+        print_plus("已确认")
+
+    target = random.randint(33, 66)
+    print(" " * (target - 2) + "[ + ]")
+
+    pos = -1
+    for i in range(100):
+        try:
+            pos += 1
+            print("|", end="",flush=True)
+            time.sleep(run_delta_t)
+        except KeyboardInterrupt:
+            break
+
+    if target - 4 <= pos <= target + 4:
+        print("x")
+        if target - 2 <= pos <= target + 2:
+            print(" " * (target - (get_shell_len(rf"\\\\   [{who}]   ////"))//2) + rf"\\\\   [{who}]   ////")
+            print(" " * (target - (get_shell_len(rf"\\\\{perfect_txt}////")) // 2) + rf"\\\\{perfect_txt}////")
+        else:
+            print(" " * (target - (get_shell_len(rf"\\ [{who}]{good_txt} //"))//2) + rf"\\ [{who}]{good_txt} //")
+    else:
+        print("?")
+
+    out = pos - target
+    if out < 0:
+        out = -out
+    return out

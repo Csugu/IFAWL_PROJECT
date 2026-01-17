@@ -108,10 +108,10 @@ class MyShip:
             "导弹": "[]",
             "粒子炮": "|| "
         }[self.platform]
-        str = ""
+        output_line = ""
         for _ in range(self.missile):
-            str += ammunition_type
-        return [str]
+            output_line += ammunition_type
+        return [output_line]
 
     def initialize(self):
         self.missile = 1
@@ -137,14 +137,14 @@ class MyShip:
         """
         return self.shelter + self.get_equivalent_shelter_from_als()
 
-    def attack(self, atk: int, type: str) -> int:
+    def attack(self, atk: int, dmg_type: str) -> int:
         """
         根据原始伤害进行加减并对目标造成攻击
         :param atk: 原始伤害
-        :param type: 伤害种类
+        :param dmg_type: 伤害种类
         :return: 经过加成减弱后的atk
         """
-        match type:
+        match dmg_type:
             case DamageType.MISSILE_LAUNCH:
                 sounds_manager.play_sfx("missile_launch")
             case DamageType.PARTICLE_CANNON_SHOOTING:
@@ -153,7 +153,7 @@ class MyShip:
                 pass
         for al in self.al_list:
             try:
-                atk = al.add_atk(atk, type)
+                atk = al.add_atk(atk, dmg_type)
             except AttributeError:
                 pass
         atk = entry_manager.check_and_reduce_atk(atk)
@@ -580,9 +580,9 @@ class Al_manager:
 
     def print_info_before_push_up(self,delta:int):
         trees = {}
-        for type in ("q","w","e"):
+        for al_type in ("q","w","e"):
             max_rank = 0
-            match type:
+            match al_type:
                 case "q":
                     max_rank = self.al_max_rank_q
                 case "w":
@@ -594,31 +594,20 @@ class Al_manager:
             als_below = [
                 f"{al.short_name}#{al.index}[{al.metadata['rank']}]" \
                 for al in sorted(self.all_al_list.values(),key=lambda al:al.rank_num) \
-                if al.rank_num <= max_rank and al.type == type
+                if al.rank_num <= max_rank and al.type == al_type
             ]
             als_delta = [
                 f"{al.short_name}#{al.index}[{al.metadata['rank']}]" \
                 for al in sorted(self.all_al_list.values(),key=lambda al:al.rank_num) \
-                if max_rank < al.rank_num <= max_rank + delta and al.type == type
+                if max_rank < al.rank_num <= max_rank + delta and al.type == al_type
             ]
             als_future = [
                 f"{al.short_name}#{al.index}[{al.metadata['rank']}]" \
                 for al in sorted(self.all_al_list.values(),key=lambda al:al.rank_num) \
-                if max_rank + delta < al.rank_num and al.type == type
+                if max_rank + delta < al.rank_num and al.type == al_type
             ]
-#            for al_name in als_below:
-#                print(al_name,end=" ")
-#            print("\n")
-#            print(">>> 即将解锁 >>>\n")
-#            for al_name in als_delta:
-#                print(al_name,end=" ")
-#            print("\n")
-#            print(">>> 未来可解锁 >>>\n")
-#            for al_name in als_future:
-#                print(al_name,end=" ")
-#            print("\n")
-            trees[type] = Txt.Tree(
-                f"{type}系终焉结",
+            trees[al_type] = Txt.Tree(
+                f"{al_type}系终焉结",
                 ">>> 当前已有 >>>",
                 als_below,
                 ">>> 即将解锁 >>>",
@@ -659,13 +648,13 @@ class Al_manager:
         my_ship.update_total_al_rank()
 
     @staticmethod
-    def get_total_al_rank() -> int:
+    def get_total_al_rank(ship:MyShip) -> int:
         """
         计算我方舰船上终焉结的总等级
         :return: 总等级
         """
         out = 0
-        for al in my_ship.al_list:
+        for al in ship.al_list:
             try:
                 out += al.rank_num
             except AttributeError:
@@ -778,11 +767,11 @@ class Al_general:
         """
         return self in self.ship.al_list
 
-    def add_atk(self, atk: int, type: str):
+    def add_atk(self, atk: int, dmg_type: str):
         """
         为atk提供加成
         :param atk: 加成前atk
-        :param type: 伤害种类，各Al决定是否加成
+        :param dmg_type: 伤害种类，各Al决定是否加成
         :return: 加成后atk
         """
         return atk
@@ -1105,8 +1094,8 @@ class Al8(Al_general):  # 维多利亚
             self.state[ASI.WORKING] = 2
             self.report("准备好")
 
-    def add_atk(self, atk, type):
-        if type != DamageType.MISSILE_LAUNCH:
+    def add_atk(self, atk, dmg_type):
+        if dmg_type != DamageType.MISSILE_LAUNCH:
             return atk
         if self.state[ASI.WORKING] == 0:
             return atk
@@ -1830,7 +1819,7 @@ class Al27(Al_general):  # 瞳猫
         if self.is_on_one_ship() and dice.current_who == Side.PLAYER and self.state[ASI.BUILDING] < 9:
             self.state[ASI.BUILDING] += 1
 
-    def add_atk(self, atk, type):
+    def add_atk(self, atk, dmg_type):
         """
         瞳猫只是一只小猫，他不会对你的攻击造成加成
         只是我需要写在这里方便在atk时调用罢了
@@ -1932,8 +1921,8 @@ al28 = Al28(28)
 
 class Al29(Al_general):  # 酒师
 
-    def __init__(self, id):
-        super().__init__(id)
+    def __init__(self, index):
+        super().__init__(index)
         self.state = [[], 0, 0, 0, 0]
 
     def initialize(self):
@@ -1974,10 +1963,10 @@ class Al29(Al_general):  # 酒师
     def generate_line_list(self):
         print_list = []
         if self.is_on_one_ship():
-            str = ""
+            icon = ""
             for i in self.state[ASI.OTHER]:
-                str += self.skin_list[i]
-            print_list.append(str)
+                icon += self.skin_list[i]
+            print_list.append(icon)
         return print_list
 
     def suggest(self):
@@ -2005,7 +1994,7 @@ class Al30(Al_general):  # 湾区铃兰
             self.ship.attack(2, DamageType.PARTICLE_CANNON_SHOOTING)
             # p_c_manager.boom_now()
 
-    def add_atk(self, atk: int, type: str) -> int:
+    def add_atk(self, atk: int, dmg_type: str) -> int:
         if self.state[ASI.COOLING] < 0 and dice.probability(0.5):
             self.report("增伤")
             return atk + 1
@@ -2332,8 +2321,8 @@ class Al35(Al_general):  # 青鹄
             if self.state[ASI.LOGGING] != 0:
                 self.state[ASI.LOGGING] -= 4
 
-    def report_plus(self, type, num):
-        txt = self.voi_list[type][num]
+    def report_plus(self, selected_type, num):
+        txt = self.voi_list[selected_type][num]
         if txt == "":
             return
         if storage_manager.show_assets()["39"] < 3:
@@ -2510,7 +2499,7 @@ class Al38(Al_general):  # 澈
             self.state[ASI.WORKING] = 0
             self.report("激进模式关闭")
 
-    def add_atk(self, atk, type):
+    def add_atk(self, atk, dmg_type):
         if self.state[ASI.WORKING] == 0 and self.is_on_one_ship() and dice.probability(0.5):
             self.state[ASI.LOGGING] += 1
             self.report("收到")
@@ -2576,8 +2565,8 @@ class Al39(Al_general):  # 黎明维多利亚
             self.state[ASI.WORKING] = 0
             self.report("下线")
 
-    def add_atk(self, atk: int, type: str):
-        if type != DamageType.MISSILE_LAUNCH:
+    def add_atk(self, atk: int, dmg_type: str):
+        if dmg_type != DamageType.MISSILE_LAUNCH:
             return atk
         if self.state[ASI.WORKING] <= 0:
             return atk
@@ -3151,12 +3140,12 @@ class MainLoops:
 
 
     @staticmethod
-    def __get_adjusting_shelter_and_missile() -> tuple[int, int]:
+    def __get_adjusting_shelter_and_missile(ship:MyShip=my_ship) -> tuple[int, int]:
         """
         基于SBMM理念对敌方护盾和导弹进行增强
         :return: 一个元组，包含敌方护盾、导弹的修正值
         """
-        total = al_manager.get_total_al_rank() // 3
+        total = al_manager.get_total_al_rank(ship) // 3
         if total < 1:
             return 0, 0
         shelter = random.randint(1, total)
@@ -3212,8 +3201,8 @@ class MainLoops:
         entry_manager.set_mode(Modes.FIGHT)
         entry_manager.clear_all_flow()
         # 确定词条烈度
-        self.entry_begin_day = 20 - al_manager.get_total_al_rank()
-        self.entry_delta = (40 - al_manager.get_total_al_rank()) // 4
+        self.entry_begin_day = 20 - al_manager.get_total_al_rank(my_ship)
+        self.entry_delta = (40 - al_manager.get_total_al_rank(my_ship)) // 4
         # 设置天数
         self.days = 1
 
@@ -3638,8 +3627,12 @@ class MainLoops:
         my_ship.life_for_ppve = 0
         another_ship.initialize()
         another_ship.life_for_ppve = 0
-        shelter, missile = self.__get_adjusting_shelter_and_missile()
-        enemy.initialize(shelter, missile)
+        shelter_from_me, missile_from_me = self.__get_adjusting_shelter_and_missile(my_ship)
+        shelter_from_another, missile_from_another = self.__get_adjusting_shelter_and_missile(another_ship)
+        enemy.initialize(
+            shelter_from_me+shelter_from_another,
+            missile_from_me+shelter_from_another
+        )
         # 终焉结初始化
         al_manager.initialize_all_al()
         # 骰子初始化
