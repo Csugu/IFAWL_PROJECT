@@ -3931,7 +3931,7 @@ main_loops = MainLoops()
 contract_manager = ContractManager(storage_manager, list(al_manager.all_al_list.keys()))
 infinity_card_manager = CardManager(my_ship,enemy,entry_manager,al_manager)
 plot_manager.set_storage_manager(storage_manager)
-ocp_manager = OcpManager(my_ship, enemy, another_ship)
+ocp_manager = OcpManager(my_ship, enemy, another_ship, main_loops)
 
 def hello():
     sounds_manager.switch_to_bgm("login")
