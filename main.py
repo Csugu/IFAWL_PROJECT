@@ -3243,6 +3243,7 @@ class MainLoops:
 
             # dusk
             ocp_manager.try_end_old_ocp()
+            ocp_manager.cool_ocp()
             if (result := self.__is_over()) != 0:
                 break
             self.days += 1

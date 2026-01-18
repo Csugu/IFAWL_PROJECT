@@ -84,6 +84,7 @@ class Ocp1(OcpGeneral):
         ship_calling.heal(2)
         self.state[OSI.COOLING] = -3
         self.state[OSI.DAYS_COUNTER] = 0
+        self.__print_and_send(f"[事件]护盾已回充，旅人正在离开舰船>[迷途旅人]事件结束")
 
     def operate_in_my_day(self):
         if self.state[OSI.DAYS_COUNTER] > 0:
@@ -145,6 +146,15 @@ class OcpManager:
             return
         if self.current_ocp.is_end():
             self.current_ocp = None
+
+    def cool_ocp(self):
+        """
+        at dusk
+        对所有事件进行一次冷却
+        :return: 无
+        """
+        for ocp in self.ocp_list.values():
+            ocp.cool()
 
     def generate_current_ocp_prompt(self):
         if self.current_ocp:
