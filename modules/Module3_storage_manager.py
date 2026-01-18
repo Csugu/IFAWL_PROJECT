@@ -185,6 +185,15 @@ class StorageManager:
             ]
         )
         input("[enter]离开仓库>>>")
+
+    def estimate_total_assets(self):
+        out = 0
+        out += self.repository_for_all_users[self.username]["currency"]["联邦信用点"] // 2200
+        out += self.repository_for_all_users[self.username]["currency"]["保险点"]
+        out += sum(self.repository_for_all_users[self.username]["materials"].values()) // 50
+        for al_index,num in self.repository_for_all_users[self.username]["als"].items():
+            out += num * AL_META_DATA[al_index]["rank_num"]
+        return out
     
     # ==================== 终焉结相关功能 ====================
     
