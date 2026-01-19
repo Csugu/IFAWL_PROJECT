@@ -159,6 +159,7 @@ class MyShip:
                 pass
         atk = entry_manager.check_and_reduce_atk(atk)
         atk = entry_manager.check_and_attack_me(atk, enemy)
+        atk = ocp_manager.adjust_me_atk(atk)
         al33.check_if_move(atk)  ####
         enemy.shelter -= atk
         return atk
@@ -176,6 +177,7 @@ class MyShip:
                 pass
         hp = entry_manager.check_and_reduce_hp(hp)
         hp = entry_manager.check_and_add_enemy_hp(hp, enemy)
+        hp = ocp_manager.adjust_me_hp(hp)
         self.shelter += hp
         if hp > 0:
             sounds_manager.play_sfx("shelter_heal")
@@ -195,6 +197,7 @@ class MyShip:
                 num = al.add_num(num)
             except AttributeError:
                 pass
+        num = ocp_manager.adjust_me_num(num)
         self.missile += num
 
     def ppve_react_extra(self,operation:str):
@@ -417,6 +420,7 @@ class EnemyShip:
                 atk = al.reduce_enemy_attack(atk)
             except AttributeError:
                 pass
+        atk = ocp_manager.adjust_enemy_atk(atk)
         target_ship.shelter -= atk
         if atk <= 0:
             voices.report("护盾", "未受伤")
@@ -438,6 +442,7 @@ class EnemyShip:
                 hp = al.reduce_enemy_heal(hp)
             except AttributeError:
                 pass
+        hp = ocp_manager.adjust_enemy_hp(hp)
         self.shelter += hp
         if hp > 0:
             voices.report("战场播报", "敌上盾", False)
@@ -449,6 +454,7 @@ class EnemyShip:
         :return: 无
         """
         num = entry_manager.check_and_add_num(num)
+        num = ocp_manager.adjust_enemy_num(num)
         self.missile += num
         if num > 0:
             voices.report("战场播报", "敌上弹", False)

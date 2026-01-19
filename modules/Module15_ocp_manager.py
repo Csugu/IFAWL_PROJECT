@@ -216,3 +216,39 @@ class OcpManager:
             self.current_ocp.operate_when_f(ship_calling)
         else:
             raise IFAWL_NoOcpError
+
+    def adjust_enemy_atk(self, atk: int) -> int:
+        """调整敌方攻击力"""
+        if self.current_ocp:
+            return self.current_ocp.adjust_enemy_atk(atk)
+        return atk
+
+    def adjust_me_atk(self, atk: int) -> int:
+        """调整我方攻击力"""
+        if self.current_ocp:
+            return self.current_ocp.adjust_me_atk(atk)
+        return atk
+
+    def adjust_enemy_hp(self, hp: int) -> int:
+        """调整敌方治疗量"""
+        if self.current_ocp:
+            return self.current_ocp.adjust_enemy_hp(hp)
+        return hp
+
+    def adjust_me_hp(self, hp: int) -> int:
+        """调整我方治疗量"""
+        if self.current_ocp:
+            return self.current_ocp.adjust_me_hp(hp)
+        return hp
+
+    def adjust_enemy_num(self, num: int) -> int:
+        """调整敌方上弹量"""
+        if self.current_ocp:
+            return self.current_ocp.adjust_enemy_num(num)
+        return num
+
+    def adjust_me_num(self, num: int) -> int:
+        """调整我方上弹量"""
+        if self.current_ocp:
+            return self.current_ocp.adjust_me_num(num)
+        return num
