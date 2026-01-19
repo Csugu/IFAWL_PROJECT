@@ -86,6 +86,8 @@ class OcpGeneral:
         if self.state[OSI.DAYS_COUNTER] > 0:
             self.print_plot()
             self.state[OSI.DAYS_COUNTER] -= 1
+            if self.state[OSI.DAYS_COUNTER] == 0:
+                self.end()
 
     def operate_when_f(self, ship_calling):
         ...
@@ -113,14 +115,20 @@ class OcpGeneral:
     def adjust_me_num(self, num: int) -> int:
         return num
 
+    def end(self):
+        """
+        使事件结束，进入冷却并打印结束文本
+        :return: 无
+        """
+        self.state[OSI.COOLING] = self.metadata["cooling"]
+        self.state[OSI.DAYS_COUNTER] = 0
+        self.print_and_send(f"[事件]{self.metadata['end_txt']}>[{self.metadata['title']}]事件结束")
 
 class Ocp1(OcpGeneral):
 
     def operate_when_f(self, ship_calling):
         ship_calling.heal(2)
-        self.state[OSI.COOLING] = -3
-        self.state[OSI.DAYS_COUNTER] = 0
-        self.print_and_send(f"[事件]护盾已回充，旅人正在离开舰船>[迷途旅人]事件结束")
+        self.end()
 
 class Ocp2(OcpGeneral):
 
@@ -129,6 +137,17 @@ class Ocp2(OcpGeneral):
             return atk + 1
         return atk
 
+class Ocp3(OcpGeneral):
+
+    def operate_in_my_day(self):
+        if self.state[OSI.DAYS_COUNTER] == 2:
+            self.print_plot()
+            self.state[OSI.DAYS_COUNTER] -= 1
+            return
+        if self.state[OSI.DAYS_COUNTER] == 1:
+            self.print_plot()
+            self.enemy_ship.attack(3)
+            self.end()
 
 class OcpManager:
 
