@@ -6,8 +6,25 @@ from core.Module2_json_loader import json_loader
 from core.Module5_dice import dice
 from core.Module14_communication import Server
 
+OCP_PROBABILITY_FOR_EACH_DAY = 0.2
+
 ALL_OCP_METADATA = json_loader.load("ocps_metadata")
 
+"""
+OCP事件对象的生命周期如下
+在被ocp_manager.try_begin_new_ocp()选中后，
+    ocp_manager会调用其begin()方法，将日期计时器设置为与剧情等长
+    同时，ocp_manager.current_ocp将被设置为此事件
+    ocp_manager封装的六大增益会检测到当前事件并调用增益方法
+    ocp_manager.operate_when_f()函数可用
+事件进行的过程中，
+    ocp.operate_in_my_day()会开始播放剧情
+    当剧情播放完毕，ocp.end()将触发，使事件进入冷却
+    若重写了OcpGeneral.operate_in_my_day()方法，请确保end()最终被调用
+end()被调用后，事件的日期计时器将被设为0
+    当天黄昏，ocp_manager.try_end_old_ocp()会发现current_ocp的日期计时器为0
+    并清除该事件
+"""
 
 class OcpGeneral:
 
@@ -16,6 +33,8 @@ class OcpGeneral:
         self.index: str = str(index)
         self.metadata = ALL_OCP_METADATA[self.index]
         self.txt_list = self.metadata["txt_list"]
+        self.min_day = self.metadata["min_day"]
+        self.weight = self.metadata["weight"]
         # 战场字段
         self.state = [None, 0, 0, 0]
         self.my_ship = my_ship
@@ -36,14 +55,16 @@ class OcpGeneral:
 
     def is_available(self) -> bool:
         """
-        基于天数和冷却判断本事件是否处于空闲状态
+        基于天数、战场天数和冷却判断本事件是否处于空闲状态
         :return: 是否空闲
         """
-        return self.state[OSI.DAYS_COUNTER] == 0 and self.state[OSI.COOLING] == 0
+        return self.state[OSI.DAYS_COUNTER] == 0 \
+            and self.state[OSI.COOLING] == 0 \
+            and self.main_loops.days >= self.min_day
 
     def is_end(self) -> bool:
         """
-        基于天数判断本事件是否已经结束
+        基于天数和冷却判断本事件是否已经结束
         :return: 是否结束
         """
         return self.state[OSI.DAYS_COUNTER] == 0
@@ -80,6 +101,8 @@ class OcpGeneral:
         if self.state[OSI.DAYS_COUNTER] > 0:
             self.print_plot()
             self.state[OSI.DAYS_COUNTER] -= 1
+            if self.state[OSI.DAYS_COUNTER] == 0:
+                self.end()
 
     def operate_when_f(self, ship_calling):
         ...
@@ -107,22 +130,44 @@ class OcpGeneral:
     def adjust_me_num(self, num: int) -> int:
         return num
 
+    def end(self):
+        """
+        使事件结束并进入冷却
+        :return: 无
+        """
+        self.state[OSI.COOLING] = self.metadata["cooling"]
+        self.state[OSI.DAYS_COUNTER] = 0
+
+    def print_when_end(self):
+        self.print_and_send(f"[事件]{self.metadata['end_txt']}>[{self.metadata['title']}]事件结束")
 
 class Ocp1(OcpGeneral):
 
     def operate_when_f(self, ship_calling):
         ship_calling.heal(2)
-        self.state[OSI.COOLING] = -3
-        self.state[OSI.DAYS_COUNTER] = 0
-        self.print_and_send(f"[事件]护盾已回充，旅人正在离开舰船>[迷途旅人]事件结束")
+        self.end()
 
 class Ocp2(OcpGeneral):
 
     def adjust_enemy_atk(self, atk: int) -> int:
-        if self.state[OSI.DAYS_COUNTER] > 0:
-            return atk * 2
-        return atk
+        return atk + 1
 
+class Ocp3(OcpGeneral):
+
+    def operate_in_my_day(self):
+        if self.state[OSI.DAYS_COUNTER] == 2:
+            self.print_plot()
+            self.state[OSI.DAYS_COUNTER] -= 1
+            return
+        if self.state[OSI.DAYS_COUNTER] == 1:
+            self.print_plot()
+            self.enemy_ship.attack(3)
+            self.end()
+
+class Ocp4(OcpGeneral):
+
+    def adjust_me_hp(self, hp: int) -> int:
+        return hp + 1
 
 class OcpManager:
 
@@ -155,7 +200,7 @@ class OcpManager:
         for ocp in self.ocp_list.values():
             ocp.clear_server()
 
-    def try_begin_new_ocp(self, probability: float = 0.9):
+    def try_begin_new_ocp(self, probability: float = OCP_PROBABILITY_FOR_EACH_DAY):
         """
         at dawn
         审视每个ocp的available()状态，并随机启动一个空闲的
@@ -169,7 +214,12 @@ class OcpManager:
         available_list = [ocp for ocp in self.ocp_list.values() if ocp.is_available()]
         if not available_list:
             return
-        new_ocp = random.choice(available_list)
+        weight_list = [ocp.weight for ocp in available_list]
+        new_ocp = random.choices(
+            available_list,
+            weights=weight_list,
+            k=1
+        )[0]
         self.current_ocp = new_ocp
         self.current_ocp.begin()
 
@@ -182,6 +232,7 @@ class OcpManager:
         if not self.current_ocp:
             return
         if self.current_ocp.is_end():
+            self.current_ocp.print_when_end()
             self.current_ocp = None
 
     def cool_ocp(self):
