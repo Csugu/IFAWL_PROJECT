@@ -2261,8 +2261,8 @@ class Al34(Al_general):  # 风间浦
         return atk
 
     def suggest(self):
-        if self.state[ASI.WORKING] > 0:
-            return f"[激进模式]剩余{self.state[ASI.WORKING]}天|{self.state[ASI.BUILDING]}伤害计入"
+        if self.state[ASI.WORKING] > 1:
+            return f"[激进模式]剩余{self.state[ASI.WORKING]-1}天|{self.state[ASI.BUILDING]}伤害计入"
         elif self.state[ASI.WORKING] == 1:
             return f"[脱离激进模式]{self.state[ASI.BUILDING]}护盾即将回充"
         elif self.state[ASI.COOLING] < 0:
@@ -2586,7 +2586,7 @@ class Al39(Al_general):  # 黎明维多利亚
                     self.report("导弹不足")
                     return
                 for _ in range(launch_num):
-                    self.ship.attack(2, DamageType.MISSILE_LAUNCH)
+                    self.ship.attack(1, DamageType.MISSILE_LAUNCH)
                     self.ship.load(-1)
                 self.state[ASI.WORKING] = 0
                 self.report("下线")
