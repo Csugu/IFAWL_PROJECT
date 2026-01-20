@@ -10,6 +10,21 @@ OCP_PROBABILITY_FOR_EACH_DAY = 0.2
 
 ALL_OCP_METADATA = json_loader.load("ocps_metadata")
 
+"""
+OCP事件对象的生命周期如下
+在被ocp_manager.try_begin_new_ocp()选中后，
+    ocp_manager会调用其begin()方法，将日期计时器设置为与剧情等长
+    同时，ocp_manager.current_ocp将被设置为此事件
+    ocp_manager封装的六大增益会检测到当前事件并调用增益方法
+    ocp_manager.operate_when_f()函数可用
+事件进行的过程中，
+    ocp.operate_in_my_day()会开始播放剧情
+    当剧情播放完毕，ocp.end()将触发，使事件进入冷却
+    若重写了OcpGeneral.operate_in_my_day()方法，请确保end()最终被调用
+end()被调用后，事件的日期计时器将被设为0
+    当天黄昏，ocp_manager.try_end_old_ocp()会发现current_ocp的日期计时器为0
+    并清除该事件
+"""
 
 class OcpGeneral:
 
@@ -117,11 +132,13 @@ class OcpGeneral:
 
     def end(self):
         """
-        使事件结束，进入冷却并打印结束文本
+        使事件结束并进入冷却
         :return: 无
         """
         self.state[OSI.COOLING] = self.metadata["cooling"]
         self.state[OSI.DAYS_COUNTER] = 0
+
+    def print_when_end(self):
         self.print_and_send(f"[事件]{self.metadata['end_txt']}>[{self.metadata['title']}]事件结束")
 
 class Ocp1(OcpGeneral):
@@ -133,9 +150,7 @@ class Ocp1(OcpGeneral):
 class Ocp2(OcpGeneral):
 
     def adjust_enemy_atk(self, atk: int) -> int:
-        if self.state[OSI.DAYS_COUNTER] > 0:
-            return atk + 1
-        return atk
+        return atk + 1
 
 class Ocp3(OcpGeneral):
 
@@ -148,6 +163,11 @@ class Ocp3(OcpGeneral):
             self.print_plot()
             self.enemy_ship.attack(3)
             self.end()
+
+class Ocp4(OcpGeneral):
+
+    def adjust_me_hp(self, hp: int) -> int:
+        return hp + 1
 
 class OcpManager:
 
@@ -212,6 +232,7 @@ class OcpManager:
         if not self.current_ocp:
             return
         if self.current_ocp.is_end():
+            self.current_ocp.print_when_end()
             self.current_ocp = None
 
     def cool_ocp(self):

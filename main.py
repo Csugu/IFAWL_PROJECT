@@ -3782,7 +3782,7 @@ class MainLoops:
         while 1:
             print()
             station_trees_manager.inject_all()
-            Txt.n_column_print(station_trees_manager.generate_all_line_list(), [50, 70])
+            Txt.n_column_print(station_trees_manager.generate_all_line_list(), 60)
             go_to = input(">>>")
             match go_to:
                 case "z":
