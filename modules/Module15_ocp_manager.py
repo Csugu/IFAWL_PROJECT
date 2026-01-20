@@ -49,10 +49,10 @@ class OcpGeneral:
 
     def is_end(self) -> bool:
         """
-        基于天数判断本事件是否已经结束
+        基于天数和冷却判断本事件是否已经结束且未调用end()
         :return: 是否结束
         """
-        return self.state[OSI.DAYS_COUNTER] == 0
+        return self.state[OSI.DAYS_COUNTER] == 0 and self.state[OSI.COOLING] == 0
 
     def cool(self):
         """
@@ -212,6 +212,7 @@ class OcpManager:
         if not self.current_ocp:
             return
         if self.current_ocp.is_end():
+            self.current_ocp.end()
             self.current_ocp = None
 
     def cool_ocp(self):
