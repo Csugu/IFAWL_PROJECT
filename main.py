@@ -3300,6 +3300,8 @@ class MainLoops:
         dice.set_probability(0.8)
         dice.set_di(0.3)
         dice.set_additional_di(0)
+        # 随机事件初始化
+        ocp_manager.initialize()
         # 自动驾驶初始化
         auto_pilot.refresh()
         # 护盾破碎效果初始化
@@ -3323,6 +3325,7 @@ class MainLoops:
             # dawn
             time.sleep(0.4)
             who = dice.decide_who(force_advance=self.__get_force_advance())
+            ocp_manager.try_begin_new_ocp()
 
             # morning
             for al in my_ship.al_list:
@@ -3330,6 +3333,7 @@ class MainLoops:
                     al.operate_in_morning()
             field_printer.print_basic_info(self.days)
             entry_manager.print_all_selected_rank()
+            print_plus(ocp_manager.generate_current_ocp_prompt())
             field_printer.print_for_fight(my_ship, enemy)
             field_printer.generate_suggestion_tree().print_self()
             field_printer.print_key_prompt()
@@ -3337,9 +3341,11 @@ class MainLoops:
             # noon
             if who == Side.PLAYER:
                 Txt.print_plus("今天由我方行动")
+                ocp_manager.operate_in_my_day()
                 my_ship.react()
             else:
                 Txt.print_plus("今天由敌方行动")
+                ocp_manager.operate_in_enemy_day()
                 enemy.react()
 
             # afternoon
@@ -3353,6 +3359,8 @@ class MainLoops:
                         al.operate_in_our_turn()
 
             # dusk
+            ocp_manager.try_end_old_ocp()
+            ocp_manager.cool_ocp()
             if entry_manager.get_rank_of("5") != 0 and my_ship.get_equivalent_shelter_of_ship() <= 0:
                 entry_manager.all_entries["5"].print_when_react()
                 result = -1
@@ -3940,12 +3948,14 @@ class MainLoops:
             [Txt.Tree(
                 "[0] 基本对战",
                 "与游荡的星际海盗进行一对一战斗",
+                "可能遭遇随机事件",
                 "启用仓库的终焉结·若失败则损毁",
                 "战斗胜利后将获得赏金和物资奖励",
             ).generate_line_list()+
             Txt.Tree(
                 "[1] 战死之地",
                 "依据选定的词条匹配相应的高强度悬赏目标进行战斗",
+                "可能遭遇随机事件",
                 "启用仓库的终焉结·若失败则损毁",
                 "战斗胜利后将获得赏金和物资奖励",
             ).generate_line_list(),
