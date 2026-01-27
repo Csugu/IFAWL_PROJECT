@@ -2779,38 +2779,39 @@ class Al43(Al_general): # 守岸人
             return
         if self.state[ASI.LOGGING] != self.ORIGIN:
             return
-        self.state[ASI.LOGGING] = self.QE_NEEDING
-        self.state[ASI.WORKING] = 3
-        self.report("启动")
+        if self.state[ASI.WORKING] == 0:
+            self.state[ASI.LOGGING] = self.QE_NEEDING
+            self.state[ASI.WORKING] = 3
+            self.report("启动")
+        else:
+            self.state[ASI.LOGGING] = self.ORIGIN
+            self.state[ASI.COOLING] = -3
+            self.state[ASI.WORKING] = 0
+            self.ship.attack(3, DamageType.ORDINARY_ATTACK)
+            self.report("爆发")
 
     def adjust_operation(self, raw: str) -> str:
-        if raw == "f":
+        if raw == "f" or raw == "w":
             return raw
         requirement = {
             self.ORIGIN: (),
             self.QE_NEEDING: ("q","e"),
             self.Q_NEEDING: ("q",),
             self.E_NEEDING: ("e",),
-            self.W_NEEDING: ("w",)
         }[self.state[ASI.LOGGING]]
-        if raw in requirement:
-            self.report("下一阶段")
-            self.state[ASI.WORKING] = 3
-            match raw:
-                case "q":
-                    self.state[ASI.LOGGING] = self.E_NEEDING
-                case "e":
-                    self.state[ASI.LOGGING] = self.Q_NEEDING
-                case "w":
-                    self.state[ASI.LOGGING] = self.ORIGIN
-                    self.state[ASI.COOLING] = -3
-                    self.state[ASI.WORKING] = 0
-                    self.ship.attack(3,DamageType.ORDINARY_ATTACK)
-                    self.report("爆发")
-                case _:
-                    pass
-            if len(requirement) == 1 and raw != "w":
-                self.state[ASI.LOGGING] = self.W_NEEDING
+        if raw not in requirement:
+            return raw
+        self.report("下一阶段")
+        self.state[ASI.WORKING] = 3
+        match raw:
+            case "q":
+                self.state[ASI.LOGGING] = self.E_NEEDING
+            case "e":
+                self.state[ASI.LOGGING] = self.Q_NEEDING
+            case _:
+                pass
+        if len(requirement) == 1:
+            self.state[ASI.LOGGING] = self.W_NEEDING
         return raw
 
     def operate_in_our_turn(self):
@@ -2823,16 +2824,19 @@ class Al43(Al_general): # 守岸人
 
     def add_hp(self, hp: int):
         if self.state[ASI.LOGGING] != self.ORIGIN:
+            self.report("回盾加成")
             return hp + 1
         return hp
 
     def add_num(self, num: int):
         if self.state[ASI.LOGGING] in (self.Q_NEEDING, self.W_NEEDING):
+            self.report("上弹加成")
             return num + 1
         return num
 
     def add_atk(self, atk: int, dmg_type: str):
         if self.state[ASI.LOGGING] in (self.E_NEEDING, self.W_NEEDING):
+            self.report("伤害加成")
             return atk + 1
         return atk
 
